@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta content='text/html; charset=UTF-8' http-equiv='Content-Type'>
+<meta charset='utf-8'>
+<meta content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no' name='viewport'>
+<title>test</title>
+<meta name="csrf-param" content="authenticity_token" />
+<meta name="csrf-token" content="vWtMwtBqQPhlhfP03HUygWfhhx0njfRbwDsF1dLGTuJMJAL9XNjKzkgeF4/FYf153a51FmjExuo9TDJt+KUh2Q==" />
+</head>
+
+<body>
+<!--<form>-->
+<!--    <input type="text">-->
+<!--</form>-->
+<div>
+    {% for item in data1 %}
+    <span>
+        {% for a in item %}
+            {{ a }}
+        {% endfor %}
+        <br />
+    </span>
+    {% endfor %}
+</div>
+</body>
