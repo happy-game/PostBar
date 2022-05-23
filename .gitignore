@@ -1,3 +1,7 @@
 PostBar/__pycache__/
+app/__pycache__/
 .idea/*
 venv/*
+*.html
+app/commentData/
+app/contentData/
