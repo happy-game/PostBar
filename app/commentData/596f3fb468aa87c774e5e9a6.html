@@ -1,0 +1,26 @@
+<div class="markdown-text"><p><a href="/user/hyj1991">@hyj1991</a>
+在问个问题
+官方API 对service 的一段说明, 不是很理解
+一个 Service 文件只能包含一个类， 这个类需要通过 module.exports 的方式返回。
+<a href="https://eggjs.org/zh-cn/basics/service.html#%E6%B3%A8%E6%84%8F%E4%BA%8B%E9%A1%B9">注意事项</a></p>
+<p>但是向我这样写 也没错啊, 感觉代码更少了, 更清晰,  那么 这样写会有什么问题呢?</p>
+<h4>service/user.js</h4>
+<pre class="prettyprint language- js"><code>module.exports.find = async (uid) =&gt; {
+  &#x2F;&#x2F; console.log(uid);
+  &#x2F;&#x2F; const user = await this.ctx.db.query(&#96;select * from user where uid = ${uid}&#96;);
+  &#x2F;&#x2F; return user;
+  return &#x27;find_SUCCESS&#x27;;
+};
+
+module.exports.create = async () =&gt; {
+  &#x2F;&#x2F; console.log(uid);
+  &#x2F;&#x2F; const user = await this.ctx.db.query(&#96;select * from user where uid = ${uid}&#96;);
+  &#x2F;&#x2F; return user;
+  return &#x27;create_SUCCESS&#x27;;
+};
+</code></pre><h4>controller/user.js</h4>
+<pre class="prettyprint language- js"><code>module.exports.find = async (ctx) =&gt; {
+  ctx.body = await ctx.service.user.find(ctx.params.uid);
+  ctx.status = 200;
+};
+</code></pre></div>

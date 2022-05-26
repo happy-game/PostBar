@@ -1,0 +1,164 @@
+<div class="markdown-text"><h2>概述</h2>
+<p>Node.js 刚刚发布了 18.0.0 版本，内置了 <code>fetch</code>、<code>node:test</code> 等标准模块。</p>
+<p><strong>一句话点评：std lib 在标准化，user lib 在精细化。</strong></p>
+<blockquote>
+<p>原文地址：<a href="https://zhuanlan.zhihu.com/p/502951532">EggJS 知乎专栏</a>，求点赞。</p>
+</blockquote>
+<hr>
+<h2>如何快速体验</h2>
+<p>推荐用 <a href="https://github.com/Schniz/fnm">fnm</a>，<a href="https://github.com/jasongin/nvs">nvs</a>，<a href="https://github.com/nvm-sh/nvm">nvm</a> 等 Node.js 版本管理器。</p>
+<pre class="prettyprint language-bash"><code>$ fnm install 18
+Installing Node v18.0.0 (arm64)
+
+$ fnm use 18
+Using Node v18.0.0
+
+$ node -v
+v18.0.0
+</code></pre><p>需要注意的是，该版本不是 LTS 版本，请勿在生产环境使用，需要等到 2022-10-25 才会成为 LTS 版本。</p>
+<p><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/012135a1091b40ef807c8b6e3919bcce~tplv-k3u1fbpfcp-zoom-1.image" alt="image.png" title="https://github.com/nodejs/Release"></p>
+<h2>Looking to the future</h2>
+<blockquote>
+<p>The project is also continuing its ‘Next 10’ effort.  The goal of this effort is to reflect on what led to success in the first 10 years of Node.js and set the direction for success in the next 10.</p>
+</blockquote>
+<p>Node.js 官方启动了 <a href="https://github.com/nodejs/next-10">next-10</a> 工作，并讨论出了<a href="https://github.com/nodejs/node/blob/master/doc/contributing/technical-priorities.md">未来重要的几件事</a>：</p>
+<ul>
+<li>现代化的 HTTP</li>
+<li>友好的类型支持</li>
+<li>对初学者更友好的渐进式文档</li>
+<li>对 ECMAScript 规范的支持和及时跟进</li>
+<li>可观测性，包括 logging/metrics/tracing，以及 APM 等</li>
+<li>更好的多线程支持</li>
+<li>支持打包为单文件的分发方式</li>
+</ul>
+<p>譬如前面说的 Fetch 就和 Modern HTTP 的会议讨论有关，<a href="https://github.com/nodejs/next-10/blob/main/meetings/summit-jan-2022.md">相关纪要</a>。</p>
+<blockquote>
+<p>6 月份的 OpenJS World 会议中将分享 ESM 和 Observability 进展，可以关注下相关动态。</p>
+</blockquote>
+<hr>
+<h2>Fetch API</h2>
+<p>前端同学应该都很熟悉<code>fetch()</code>这个 API，它提供了标准的网络请求能力，取代了远古的  XMLHttpRequest 。</p>
+<p>反观 Node.js 侧，官方提供的 <a href="https://nodejs.org/dist/latest-v18.x/docs/api/http.html#httprequesturl-options-callback">http.request()</a>，太底层太基础了，用起来往往需要大量的封装。譬如 302 后自动跳转、文件上传、响应结果解析等等。</p>
+<p>因此在 Node.js 社区有非常多的上层请求库封装：</p>
+<ul>
+<li>曾经广受社区欢迎的 request 库去年<a href="https://github.com/request/request/issues/3142">宣布停止维护</a>后，也引起了社区比较大的混乱。。</li>
+<li>我们 Egg 内置的是 <a href="https://www.npmjs.com/package/urllib">urllib</a>，沉淀了阿里多年在网络请求上踩的坑，足够稳定，不过代码也有点久远了。</li>
+<li>更多参见 <a href="https://github.com/request/request/issues/3143">Alternative libraries to request</a> 以及 <a href="https://zhuanlan.zhihu.com/p/415361629">《天猪：那些你应该说再见的 npm 祖传老库》</a>。</li>
+</ul>
+<p><strong>去年 Node.js 官方推出了 <strong><a href="https://undici.nodejs.org/"><strong>undici</strong></a></strong>，一个非常现代化的库，具备优越的性能，良好的扩展性，内置的 mock 等能力，集大成者。</strong></p>
+<blockquote>
+<p>undici 的命名也很有趣：A HTTP/1.1 client → 11 → Eleven → Undici，即意大利语的 11。</p>
+</blockquote>
+<p>从而 <strong>Node.js 终于内置了新的请求库</strong>，它遵循 <a href="https://fetch.spec.whatwg.org/">Fetch 规范</a>，底层就是基于 undici 来实现的。</p>
+<pre class="prettyprint language-javascript"><code>const res = await fetch(&#x27;https:&#x2F;&#x2F;nodejs.org&#x2F;api&#x2F;documentation.json&#x27;);
+if (res.ok) {
+  const data = await res.json();
+  console.log(data);
+}
+</code></pre><p>就这么简单，比 <a href="https://nodejs.org/dist/latest-v18.x/docs/api/http.html#httprequesturl-options-callback">http.request()</a> 那一坨 callback-style 代码简洁多了，平时写个脚本啥的，不用再引入额外的类库了。</p>
+<p>全局增加了 fetch, FormData, Headers, Request, Response 这几个 API，以及 Web Streams API。</p>
+<p>目前还处于默认开启的实验性特性阶段，文档在 <a href="https://nodejs.org/dist/latest-v18.x/docs/api/globals.html#fetch">Globals</a> 章节，近乎没有，有需要直接看 <a href="https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API">MDN 文档</a> 即可。</p>
+<p>可能是为了遵循规范， undici 的很多能力如 Mock，Proxy，Pool 等都没有提供出来。</p>
+<hr>
+<h2>Test Runner</h2>
+<p>单元测试很重要，很多新兴的编程语言都是会内置对应的能力，但前端这块一直都是由社区来实现，前端同学耳熟能详的 Test Runner 有 <a href="https://mochajs.org/">Mocha</a>、<a href="https://jestjs.io/">Jest</a>。</p>
+<pre class="prettyprint language-javascript"><code>&#x2F;&#x2F; mocha showcase
+import assert from &#x27;assert&#x2F;strict&#x27;;
+
+describe(&#x27;test&#x2F;index.test.js&#x27;, () =&gt; {
+  it(&#x27;test1&#x27;, async () =&gt; {
+    const res = await fetch(&#x27;https:&#x2F;&#x2F;nodejs.org&#x2F;api&#x2F;documentation.json&#x27;);
+    assert(res.ok);
+  });
+  
+  it.skip(&#x27;skip some test&#x27;, () =&gt; {});
+});
+</code></pre><p>终于，Node.js 在 18.x 里官方支持了 <a href="https://nodejs.org/dist/latest-v18.x/docs/api/test.html">Test 能力</a>：</p>
+<pre class="prettyprint language-javascript"><code>import test from &#x27;node:test&#x27;;
+import assert from &#x27;assert&#x2F;strict&#x27;;
+
+&#x2F;&#x2F; 等价于 describe()
+test(&#x27;asynchronous passing test&#x27;, async () =&gt; {
+  const res = await fetch(&#x27;https:&#x2F;&#x2F;nodejs.org&#x2F;api&#x2F;documentation.json&#x27;);
+  assert(res.ok);
+});
+
+test(&#x27;multi level test&#x27;, async (t) =&gt; {
+  &#x2F;&#x2F; 等价于 it()
+  await t.test(&#x27;subtest 1&#x27;, (t) =&gt; {
+    assert.strictEqual(1, 1);
+  });
+
+  await t.test(&#x27;subtest 2&#x27;, (t) =&gt; {
+    assert.strictEqual(2, 2);
+  });
+});
+
+&#x2F;&#x2F; 等价于 describe.skip() &#x2F; it.skip()
+test(&#x27;skip option&#x27;, { skip: true }, () =&gt; {});
+
+&#x2F;&#x2F; 等价于 describe.only() &#x2F; it.only()
+test(&#x27;only option&#x27;, { only: true }, () =&gt; {});
+</code></pre><p>可以看到：</p>
+<ul>
+<li>语法其实差不多，会更简洁一点，就一个 <code>test()</code>，options 除了 skip 和 only 外，还支持 concurrency 并发。</li>
+<li>无需启动器，每一个文件都是一个可执行的 Node.js 代码。</li>
+<li>暂未支持 <code>before/after/beforeEach/afterEach</code> 能力，看 issue 描述会后续支持。</li>
+<li>暂未支持 Reporter，但日志输出为标准 <a href="https://testanything.org/">TAP</a> 格式，所以应该很容易能复用现有的社区生态。</li>
+</ul>
+<p>类似覆盖率的演进过程，以前我们需要通过 nyc 对代码转译打桩，现在变为的 Node.js 内置覆盖率输出，nyc 变为 c8 这样的覆盖率报告生成工具。</p>
+<p>后续 mocha 等估计会变为类似的上层封装，提供批量执行 和 Reporter 等能力。</p>
+<hr>
+<h2>Build-time user-land snapshot</h2>
+<p>简单的说，可以把某个 js 直接编译成 v8 snapshot，从而可以极大的提速启动时间。</p>
+<p>目前这个版本，还只能通过 Node.js 源码来编译，且只能编译成 Node.js Runtime 的方式，即 Build-time。</p>
+<pre class="prettyprint language-bash"><code># 把一段 markdown 渲染的逻辑，直接打包到 Node Runtime
+$ cd &#x2F;path&#x2F;to&#x2F;node&#x2F;source
+$ .&#x2F;configure --node-snapshot-main=marked.js
+$ make node
+
+# 执行编译好的 Node Runtime
+$ out&#x2F;Release&#x2F;node
+&gt; const html = globalThis.marked(&#x27;# this is title&#x27;);
+</code></pre><p>秋怡正在继续推进<a href="https://github.com/nodejs/node/issues/35711">该能力</a>，未来可以无需编译 Node.js 源码：</p>
+<pre class="prettyprint language-bash"><code>$ node --build-snapshot --snapshot-blob marked.blob marked.js 
+$ node --snapshot-blob marked.blob
+</code></pre><p>PS：这个能力用在命令行 CLI 的独立打包好像也不错。<a href="https://github.com/nodejs/node/issues/42566">https://github.com/nodejs/node/issues/42566</a></p>
+<hr>
+<h2>V8 引擎升级</h2>
+<p>内置的 V8 引擎升级到 10.1 版本，值得注意的特性：</p>
+<ul>
+<li>class fields 和 private class methods 的性能优化。</li>
+<li><a href="https://v8.dev/blog/v8-release-99#intl.locale-extensions">Intl 规范</a> 的支持，在做日期的本地化，字符串处理的时候非常有用。</li>
+<li>数组支持 findLast() 和 findLastIndex() 等。</li>
+</ul>
+<p>秋怡也写了一篇文章 <a href="https://v8.dev/blog/faster-class-features">Faster initialization of instances with new class features</a> 分享了背后的实现。</p>
+<p>PS：<a href="https://mp.weixin.qq.com/s/6PTcjJQTED3WpJH8ToXInw">ECMAScript 双月报告：装饰器提案进入 Stage 3</a> ，阿里的 Node 架构团队今年会推动 Decorator 方案在 V8 的落地实现，不过肯定赶不上了，只能 Node.js 20.x 见了。</p>
+<hr>
+<h2>ESM 的支持</h2>
+<p>虽然在 18.x 中没有新的内容，但在过去的几个月中一直在持续推动 ECMAScript模块实现：</p>
+<ul>
+<li>对 <a href="https://github.com/tc39/proposal-import-assertions">JSON Import Assertions</a> 的支持。</li>
+<li>JSON 模块的正式支持。</li>
+<li>对 HTTPS 和 HTTP 导入的实验性支持。</li>
+<li><a href="https://github.com/nodejs/loaders">Node.js 加载器团队</a>也在继续开发 ECMAScript 模块加载器实现。</li>
+</ul>
+<hr>
+<h2>工具链和编译器的升级</h2>
+<ul>
+<li>Linux 版是在 RHEL8 上构建的，要求 glibc 2.28 以上版本。</li>
+<li>macOS 要求 10.15 以上版本。</li>
+<li>Windows 很多旧版本也不支持了。</li>
+</ul>
+<p>PS：CentOS 7 官方不再维护了，它对应的 glibc 版本太低，所以升不了。。。</p>
+<ul>
+<li><a href="https://developer.aliyun.com/article/780803">centos7和8不维护停止更新之后，服务器选择使用什么系统好？</a></li>
+<li><a href="https://github.com/nodejs/node/pull/42659">doc: update minimum glibc requirements for Linux by richardlau</a></li>
+</ul>
+<hr>
+<h2>相关资料</h2>
+<ul>
+<li><a href="https://nodejs.org/en/blog/announcements/v18-release-announce">https://nodejs.org/en/blog/announcements/v18-release-announce</a></li>
+<li><a href="https://nodejs.org/en/blog/release/v18.0.0/">https://nodejs.org/en/blog/release/v18.0.0/</a></li>
+</ul>
+</div>

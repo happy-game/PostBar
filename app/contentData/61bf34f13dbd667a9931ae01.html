@@ -1,0 +1,12 @@
+<div class="markdown-text"><p>面试的时候有一道代码题， online coding的。
+给了一个 函数命名
+function fetchPrice(start,end) {
+	//需要
+	axios.get(url).then(
+		res=&gt;console.log(res)
+	)
+}
+给了指定api，让用apifetch一些数据并打印出来。 这个难点就来了，按我们看到的这个函数签名是个同步函数，我试了改成 async会直接报错。
+所以我如何才能在这个函数里面用ajax call api 并把得到的结果打印出来呢。 我在测试中的时候，在异步函数中无论尝试打什么都打不到控制台， 因为主函数已经return了。</p>
+<p>面试已经结束了结果不重要， 但是这个问题我百思不得其解，希望有大神帮我解答。 再次感谢~！！！</p>
+</div>

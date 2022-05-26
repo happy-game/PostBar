@@ -1,0 +1,70 @@
+<div class="markdown-text"><p>BFF字面意思是服务于前端的后端，我的理解就是数据聚合层。我们组在维护一个后台管理系统，会频繁的与数据库交互。</p>
+<p>过去为了增删改查会写大量的对应接口，并且还需要在Model、Service、Router三层写不同的代码逻辑，吃力不讨好。</p>
+<p>为了节约开发时间，构思通用接口，并付诸于实际项目中。虽然简化了Router和Service部分，但其实就是将该部分的代码迁移到了前端页面中。</p>
+<p>这里有一点小隐患，因为目前我们组的成员是全栈维护，所以知道数据库ORM的语法规则，若前后端分离，那就不可取了，并且工作量其实是从后端转移到了前端。</p>
+<p>虽然时间是节约了一些，但是后端的代码却暴露在了前端，维护性方面下降了不少，于是想到了BFF。</p>
+<p>首先查看了许多已经在运行的成功案例，有些是基于GraphQL重新封装的系统，有些是定制化的系统。经过三天的仔细权衡对比后，决定自己定制化。</p>
+<p>主要考虑了两方面，一方面是改造成本，如果基于GraphQL的一些封装库（例如Type-GraphQL、apollo、Prisma等）来设计系统的话，那势必需要了解这些的库的方方面面，并且还需要将其集成到已经的结构中。</p>
+<p>另一方面是使用成本，系统完成后是给人用的，不能太复杂，为了避免让使用人员来适应这套系统，最方便的就是将之前的开发流程修改成配置化。</p>
+<p>BFF的实现逻辑由后端定义，并且⽆需重构，也不必后端配合改造与联调。</p>
+<p>这套系统完成后，会真真切切地影响之前的开发流程，例如不必单独写接口文档，并且可以随时在系统中调试，而不必借助postman调试。</p>
+<h3>一、前端界面</h3>
+<p><strong>1）配置</strong></p>
+<p>当前80%的Node接口代码复杂度都并不⾼，基本都是机械化重复的，这些接口可分为三部分：参数处理（1）、服务调用（2）和响应聚合（3），类似于下图。
+<img src="//static.cnodejs.org/FltTv7ORI7Latqo0Pm1ltG4uBTiJ" alt="1.png"></p>
+<p>那么前端界面就可以围绕这三部分展开，如下图所示，其中处理器就是服务调用，只是会基于通用接口服务和指定的Model的封装函数。
+<img src="//static.cnodejs.org/FmtLPgWgp6c6riECK2RWw9Wd1U2V" alt="2.png"></p>
+<p>权限ID就是一段字符串，会在权限系统做接口校验，具体会在后文讲解。模块其实就是之前Router目录中的各个文件，现在将它们作为选项存在。</p>
+<p>参数是可以动态配置的，处理器也是一样，并且在选中方法后会显示方法名和方法参数，而在选好Model文件后，会出现查看按钮。
+<img src="//static.cnodejs.org/Fm6dImmH2pQkqJERtXBA7JxdvI0z" alt="3.png"></p>
+<p>点击查看按钮就能看到Model文件中映射的属性，以及数据库表的字段了，在之前的开发中经常需要查找这些属性和字段，甚是繁琐。</p>
+<p>逻辑结构就是接口的主体，除了参数部分的代码不需要写之外，其余代码都在这里完成，是整个接口最为核心的部分。
+<img src="//static.cnodejs.org/Flz3lds3fjy9jwl0qhjy__oIb-s7" alt="4.png"></p>
+<p>这部分的处理我其实考虑了很久，在简便和自定义之间找到了一个平衡点，最终才实现了上述效果。</p>
+<p>之前声明的参数和处理器都可以在这个编辑器中引用，这个代码编辑器采用的是monaco-editor，微软出品的VS Code浏览器版本，该有的功能都有。</p>
+<p>但是我只集成了代码高亮的功能，自动索引的功能没有成功集成进来，顺便说下，官方的API文档非常不友好。</p>
+<p><strong>2）调试</strong></p>
+<p>在配置化界面的最下方，就是调试部分，当接口创建完成后，就能马上调试。
+<img src="//static.cnodejs.org/FlbdsdAjHsVGQBbdHiTKJH_LYL7y" alt="5.png"></p>
+<p>点击API文本框中的搜索icon，就能看到最终的源码了，能帮助自己迅速定位问题。
+<img src="//static.cnodejs.org/Fr63fbrL9whh11hroUTYemVy5t2x" alt="6.png"></p>
+<p><strong>3）列表</strong></p>
+<p>在列表界面中，包含新建的入口，以及查看和编辑。当跳转到创建页面后，点击浏览器的返回键，列表页面能恢复成之前的样子。
+<img src="//static.cnodejs.org/FnJ4XatqN99tLorS5zrMn1nBJEh_" alt="7.png"></p>
+<p>列表页面的状态不会受跳转的影响。点击查看会出现配置信息、源码和调试界面，这些配置信息就是接口文档，并且还能随时调试。
+<img src="//static.cnodejs.org/FiuSS1gVEakltUBnxa8BQ2tV-ywx" alt="8.png"></p>
+<h3>二、后端服务</h3>
+<p>这次我将API接口的数据都存储在MongoDB中，主要考虑的是数据中会包含大量的数组和JSON对象，若存在MySQL中，就需要在存入和取出时做序列化和反序列化。</p>
+<p><strong>1）vm</strong></p>
+<p>后端在接收到界面中的参数后，就会将相关参数解析成对应代码，再拼接成一整段的字符串代码。执行这段代码使用的是Node内置的vm模块。</p>
+<pre class="prettyprint language-javascript"><code>const sandbox = {
+  ctx,
+  services,
+  console,
+  redis,
+  mainFunc: function () {}         &#x2F;&#x2F;主函数
+};
+vm.createContext(sandbox);
+&#x2F;&#x2F; 在执行上下文运行
+vm.runInContext(code, sandbox);
+await sandbox.mainFunc();
+</code></pre><p>在sandbox变量中，特地声明了一个mainFunc属性，因为执行的代码中会使用await语法，那么就需要将代码包在由async声明的函数中。</p>
+<p><strong>2）接口调用</strong></p>
+<p>Node服务基于KOA框架，路由基于koa-router库，为了尽量与之前的调用方式保持一致，就重新声明了一个可配置的路由。</p>
+<pre class="prettyprint language-javascript"><code>router.all(&quot;&#x2F;bff&#x2F;:path1&#x2F;:path2&quot;, async (ctx) =&gt; {
+  const { path1, path2 } = ctx.params;
+  const bff = await services.common.getOneBFF({ api: path1 + &quot;&#x2F;&quot; + path2 });
+  if (!bff) {
+    return;
+  }
+  &#x2F;&#x2F;权限判断
+  if (bff.authority) {
+    const pass = await checkAuth(ctx, bff.authority);
+    if (!pass) return;
+  }
+  &#x2F;&#x2F;运行代码
+  await runCode(bff.rawCode, ctx);
+});
+</code></pre><p>在这个方法中，配置了两个路径参数path1和path2，所有通过这套BFF系统创建的接口，在前端调用时，都需要添加 /bff/ 前缀。</p>
+<p>而权限判断都会交由 checkAuth() 函数处理，之前这个函数是一个中间件，那么将其关键部分抽象出来后，也能达到权限验证的效果，与普通接口无异。</p>
+</div>

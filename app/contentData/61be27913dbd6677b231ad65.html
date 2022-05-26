@@ -1,0 +1,111 @@
+<div class="markdown-text"><p><img src="https://user-images.githubusercontent.com/23253540/146651072-7da54412-294e-48f1-afd3-0c9385416d5c.png" alt="image">
+原文链接: <a href="https://github.com/xiaoxiaojx/blog/issues/22">https://github.com/xiaoxiaojx/blog/issues/22</a></p>
+<h2>背景</h2>
+<p>Node-API 的基本概念里面提到了 ABI, 前端开发的同学对这个词语可能就比较陌生，和平时经常提到的 API 有什么区别？</p>
+<blockquote>
+<p>Node-API（以前称为 N-API）是用于构建原生插件的 API。它独立于底层 JavaScript 运行时（例如，V8）并作为 Node.js 本身的一部分进行维护。此 API 将在 Node.js 的各个版本中保持稳定的应用程序二进制接口 (ABI)。它旨在将插件与底层 JavaScript 引擎中的更改隔离开来，并允许为一个主要版本编译的模块无需重新编译即可在 Node.js 的后续主要版本上运行</p>
+</blockquote>
+<h2>API 与 ABI</h2>
+<h3>API 应用程序接口</h3>
+<p>这是从应用程序/库公开的一组公共类型/变量/函数。 在 C/C++ 中，这是应用程序附带的头文件中公开的内容。</p>
+<h3>ABI 二进制接口</h3>
+<p>这就是编译器构建应用程序的方式。 它定义了事物（但不限于）：</p>
+<ul>
+<li>如何将参数传递给函数（寄存器/堆栈）</li>
+<li>谁从堆栈中清除参数（调用者/被调用者）</li>
+<li>返回值放置的位置以供返回</li>
+<li>异常如何传播</li>
+</ul>
+<h3>举个例子</h3>
+<p>下面的 main.c 程序依赖了 mylib 这个库, mylib 这个库对外暴露了 mylib_init 这个接口, 该接口的出参与入参可以看 mylib.h 中的类型定义。</p>
+<pre class="prettyprint language-c"><code>&#x2F;&#x2F; main.c
+
+#include &lt;assert.h&gt;
+#include &lt;stdlib.h&gt;
+
+#include &quot;mylib.h&quot;
+
+int main(void) {
+    mylib_mystruct *myobject = mylib_init(1);
+    assert(myobject-&gt;old_field == 1);
+    free(myobject);
+    return EXIT_SUCCESS;
+}
+</code></pre><pre class="prettyprint language-c"><code>&#x2F;&#x2F; mylib.c
+
+#include &lt;stdlib.h&gt;
+
+#include &quot;mylib.h&quot;
+
+mylib_mystruct* mylib_init(int old_field) {
+    mylib_mystruct *myobject;
+    myobject = malloc(sizeof(mylib_mystruct));
+    myobject-&gt;old_field = old_field;
+    return myobject;
+}
+</code></pre><pre class="prettyprint language-c"><code>&#x2F;&#x2F; mylib.h
+
+#ifndef MYLIB_H
+#define MYLIB_H
+
+typedef struct {
+    int old_field;
+} mylib_mystruct;
+
+mylib_mystruct* mylib_init(int old_field);
+
+#endif
+</code></pre><p>现在 mylib 这个库进行了 v2 版本的升级。v2 版本修改了 mylib_mystruct 的定义, 新增加了 new_field 字段，新的定义如下</p>
+<pre class="prettyprint language-c"><code>&#x2F;&#x2F; mylib.h
+
+typedef struct {
+    int new_field;
+    int old_field;
+} mylib_mystruct;
+</code></pre><p>此时我们只重新编译 mylib, 不重新编译 main.c 主程序。然后运行 main.out, 发现 main 函数里面的 assert 错误了…</p>
+<pre class="prettyprint language-c"><code>&#x2F;&#x2F; main.c
+
+assert(myobject-&gt;old_field == 1);
+</code></pre><p>因为 myobject 还是访问的第一个字段, 但是现在第一个字段为 new_field 了，程序中并没有为它赋值。<strong><em>此时对于用户来说 API 没有造成 break change, 可以不用修改代码来适配。但是由于 ABI 的 break change 导致需要重新编译主程序，所以 ABI 的稳定性的维持是高于 API 的</em></strong>。</p>
+<p>如果把新增 new_field 放在 old_field 之后了，发现程序运行是没有问题的。mylib 通过后者的方式去升级 v2 版本，即使新增了字段，ABI 依然是稳定的。</p>
+<pre class="prettyprint language-c"><code>&#x2F;&#x2F; mylib.h
+
+typedef struct {
+    int old_field;
+    int new_field;
+} mylib_mystruct;
+</code></pre><h2>扩展阅读</h2>
+<p>下面所示的使用 Node-API 开发的 c++ 插件的代码例子, 对于我来说就比较好奇 napi_value 的定义</p>
+<pre class="prettyprint language-c"><code>&#x2F;&#x2F; demo
+
+napi_status status;
+napi_value object, string;
+status = napi_create_object(env, &amp;object);
+if (status != napi_ok) {
+  napi_throw_error(env, ...);
+  return;
+}
+
+status = napi_create_string_utf8(env, &quot;bar&quot;, NAPI_AUTO_LENGTH, &amp;string);
+if (status != napi_ok) {
+  napi_throw_error(env, ...);
+  return;
+}
+
+status = napi_set_named_property(env, object, &quot;foo&quot;, string);
+if (status != napi_ok) {
+  napi_throw_error(env, ...);
+  return;
+}
+</code></pre><p>最后我们在 js_native_api_types.h 文件找到了 napi_value 的定义。napi_value 是 struct napi_value__ 类型的指针，其实 napi_value__ 是未定义的。从源码中的注释可知， 编译时 undefined structs 会比 void* 更加安全。</p>
+<pre class="prettyprint language-c"><code>&#x2F;&#x2F; src&#x2F;js_native_api_types.h
+
+&#x2F;&#x2F; JSVM API types are all opaque pointers for ABI stability
+&#x2F;&#x2F; typedef undefined structs instead of void* for compile time type safety
+typedef struct napi_value__* napi_value;
+</code></pre><p>实测上面的 napi_value__ 是 undefined 编译是会通过的，实际使用的时候强制类型转换为目标类型即可。</p>
+<h2>参考</h2>
+<ul>
+<li><a href="https://stackoverflow.com/questions/3784389/difference-between-api-and-abi">Difference between API and ABI</a></li>
+</ul>
+</div>

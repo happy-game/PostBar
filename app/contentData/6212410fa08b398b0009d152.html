@@ -1,0 +1,143 @@
+<div class="markdown-text"><p>几年前我们基于 Php 开发了一个代码生成器，供内部开发使用，后来慢慢发展，使用 Golang 进行了重构，重构之后不仅仅是用来生成 Api ，创建数据库，写 Sql ，还有描述后台界面，都支持了，还整了一个 V8 引擎进去，用来处理一些复杂的数据逻辑，现在我们内部的项目都是基于这个低代码工具来的。</p>
+<p>经过半年的整理，还有筹划之后，我们决定把它开源了，因为我们发现，用了 Yao 这个低代码工具，写后台的效率爆炸，按照工时来看效率起码提升了 10 倍。</p>
+<p>下面简单介绍一下用法，感兴趣的兄弟可以去点个 star ，支持一下，祝你今年好运爆棚！</p>
+<p>引擎： <a href="https://github.com/YaoApp/yao">https://github.com/YaoApp/yao</a></p>
+<p>界面： <a href="https://github.com/YaoApp/xgen">https://github.com/YaoApp/xgen</a></p>
+<p><img src="https://yaoapps.com/images/case/crm_1.png" alt="img"></p>
+<h2>创建数据库</h2>
+<pre class="prettyprint language-json"><code>{
+  &quot;name&quot;: &quot;宠物&quot;,
+  &quot;table&quot;: { &quot;name&quot;: &quot;pet&quot;, &quot;comment&quot;: &quot;宠物表&quot; },
+  &quot;columns&quot;: [
+    { &quot;label&quot;: &quot;ID&quot;, &quot;name&quot;: &quot;id&quot;, &quot;type&quot;: &quot;ID&quot;, &quot;comment&quot;: &quot;ID&quot; },
+    { &quot;label&quot;: &quot;编号&quot;, &quot;name&quot;: &quot;sn&quot;, &quot;type&quot;: &quot;string&quot;, &quot;unique&quot;: true },
+    { &quot;label&quot;: &quot;名称&quot;, &quot;name&quot;: &quot;name&quot;, &quot;type&quot;: &quot;string&quot;, &quot;index&quot;: true },
+    {
+      &quot;label&quot;: &quot;类型&quot;,
+      &quot;name&quot;: &quot;kind&quot;,
+      &quot;type&quot;: &quot;enum&quot;,
+      &quot;option&quot;: [&quot;猫&quot;, &quot;狗&quot;],
+      &quot;default&quot;: &quot;猫&quot;,
+      &quot;index&quot;: true
+    },
+    { &quot;label&quot;: &quot;介绍&quot;, &quot;name&quot;: &quot;desc&quot;, &quot;type&quot;: &quot;string&quot;, &quot;comment&quot;: &quot;详细介绍&quot; }
+  ],
+  &quot;values&quot;: [
+    { &quot;sn&quot;: &quot;100001&quot;, &quot;name&quot;: &quot;Cookie&quot;, &quot;kind&quot;: &quot;猫&quot;, &quot;desc&quot;: &quot;一只猫&quot; },
+    { &quot;sn&quot;: &quot;100002&quot;, &quot;name&quot;: &quot;Beibei&quot;, &quot;kind&quot;: &quot;狗&quot;, &quot;desc&quot;: &quot;一只狗&quot; }
+  ],
+  &quot;option&quot;: { &quot;timestamps&quot;: true, &quot;soft_deletes&quot;: true }
+}
+</code></pre><h2>编写接口</h2>
+<pre class="prettyprint language-json"><code>{
+  &quot;name&quot;: &quot;宠物&quot;,
+  &quot;version&quot;: &quot;1.0.0&quot;,
+  &quot;description&quot;: &quot;宠物接口&quot;,
+  &quot;guard&quot;: &quot;bearer-jwt&quot;,
+  &quot;group&quot;: &quot;pet&quot;,
+  &quot;paths&quot;: [
+    {
+      &quot;path&quot;: &quot;&#x2F;search&quot;,
+      &quot;method&quot;: &quot;GET&quot;,
+      &quot;guard&quot;: &quot;-&quot;,
+      &quot;process&quot;: &quot;models.pet.Paginate&quot;,
+      &quot;query&quot;: [&quot;:query-param&quot;, &quot;$query.page&quot;, &quot;$quey.pagesize&quot;],
+      &quot;out&quot;: {
+        &quot;status&quot;: 200,
+        &quot;type&quot;: &quot;application&#x2F;json&quot;
+      }
+    },
+    {
+      &quot;path&quot;: &quot;&#x2F;save&quot;,
+      &quot;method&quot;: &quot;POST&quot;,
+      &quot;guard&quot;: &quot;-&quot;,
+      &quot;process&quot;: &quot;models.pet.Save&quot;,
+      &quot;query&quot;: [&quot;:payload&quot;],
+      &quot;out&quot;: {
+        &quot;status&quot;: 200,
+        &quot;type&quot;: &quot;application&#x2F;json&quot;
+      }
+    }
+  ]
+}
+</code></pre><h2>描述后台界面</h2>
+<pre class="prettyprint language-json"><code>{
+  &quot;name&quot;: &quot;宠物&quot;,
+  &quot;version&quot;: &quot;1.0.0&quot;,
+  &quot;decription&quot;: &quot;宠物管理表格&quot;,
+  &quot;bind&quot;: { &quot;model&quot;: &quot;pet&quot; },
+  &quot;apis&quot;: {},
+  &quot;columns&quot;: {
+    &quot;ID&quot;: {
+      &quot;label&quot;: &quot;ID&quot;,
+      &quot;view&quot;: { &quot;type&quot;: &quot;label&quot;, &quot;props&quot;: { &quot;value&quot;: &quot;:id&quot; } }
+    },
+    &quot;编号&quot;: {
+      &quot;label&quot;: &quot;编号&quot;,
+      &quot;view&quot;: { &quot;type&quot;: &quot;label&quot;, &quot;props&quot;: { &quot;value&quot;: &quot;:sn&quot; } },
+      &quot;edit&quot;: { &quot;type&quot;: &quot;input&quot;, &quot;props&quot;: { &quot;value&quot;: &quot;:sn&quot; } }
+    },
+    &quot;名称&quot;: {
+      &quot;label&quot;: &quot;名称&quot;,
+      &quot;view&quot;: { &quot;type&quot;: &quot;label&quot;, &quot;props&quot;: { &quot;value&quot;: &quot;:name&quot; } },
+      &quot;edit&quot;: { &quot;type&quot;: &quot;input&quot;, &quot;props&quot;: { &quot;value&quot;: &quot;:name&quot; } }
+    },
+    &quot;类型&quot;: {
+      &quot;label&quot;: &quot;类型&quot;,
+      &quot;view&quot;: { &quot;type&quot;: &quot;label&quot;, &quot;props&quot;: { &quot;value&quot;: &quot;:kind&quot; } },
+      &quot;edit&quot;: {
+        &quot;type&quot;: &quot;select&quot;,
+        &quot;props&quot;: {
+          &quot;value&quot;: &quot;:kind&quot;,
+          &quot;options&quot;: [
+            { &quot;label&quot;: &quot;猫&quot;, &quot;value&quot;: &quot;猫&quot; },
+            { &quot;label&quot;: &quot;狗&quot;, &quot;value&quot;: &quot;狗&quot; }
+          ]
+        }
+      }
+    },
+    &quot;介绍&quot;: {
+      &quot;label&quot;: &quot;介绍&quot;,
+      &quot;view&quot;: { &quot;type&quot;: &quot;label&quot;, &quot;props&quot;: { &quot;value&quot;: &quot;:desc&quot; } },
+      &quot;edit&quot;: { &quot;type&quot;: &quot;textArea&quot;, &quot;props&quot;: { &quot;value&quot;: &quot;:desc&quot;, &quot;rows&quot;: 4 } }
+    }
+  },
+  &quot;filters&quot;: {
+    &quot;关键词&quot;: {
+      &quot;label&quot;: &quot;关键词&quot;,
+      &quot;bind&quot;: &quot;where.name.match&quot;,
+      &quot;input&quot;: { &quot;type&quot;: &quot;input&quot;, &quot;props&quot;: { &quot;placeholder&quot;: &quot;请输入关键词&quot; } }
+    }
+  },
+  &quot;list&quot;: {
+    &quot;primary&quot;: &quot;id&quot;,
+    &quot;layout&quot;: {
+      &quot;columns&quot;: [
+        { &quot;name&quot;: &quot;ID&quot;, &quot;width&quot;: 80 },
+        { &quot;name&quot;: &quot;编号&quot;, &quot;width&quot;: 100 },
+        { &quot;name&quot;: &quot;名称&quot;, &quot;width&quot;: 200 },
+        { &quot;name&quot;: &quot;类型&quot; }
+      ],
+      &quot;filters&quot;: [{ &quot;name&quot;: &quot;关键词&quot; }]
+    },
+    &quot;actions&quot;: { &quot;pagination&quot;: { &quot;props&quot;: { &quot;showTotal&quot;: true } } },
+    &quot;option&quot;: {}
+  },
+  &quot;edit&quot;: {
+    &quot;primary&quot;: &quot;id&quot;,
+    &quot;layout&quot;: {
+      &quot;fieldset&quot;: [
+        {
+          &quot;columns&quot;: [
+            { &quot;name&quot;: &quot;编号&quot;, &quot;width&quot;: 8 },
+            { &quot;name&quot;: &quot;名称&quot;, &quot;width&quot;: 8 },
+            { &quot;name&quot;: &quot;类型&quot;, &quot;width&quot;: 8 },
+            { &quot;name&quot;: &quot;介绍&quot;, &quot;width&quot;: 24 }
+          ]
+        }
+      ]
+    },
+    &quot;actions&quot;: { &quot;cancel&quot;: {}, &quot;save&quot;: {}, &quot;delete&quot;: {} }
+  }
+}
+</code></pre></div>

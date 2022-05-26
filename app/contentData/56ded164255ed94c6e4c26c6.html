@@ -1,0 +1,11 @@
+<div class="markdown-text"><p>最近在看generator的东西，发现大部分的介绍都是利用它来减少callback hell。但是我在 <a href="http://www.v2ex.com/t/135335">这个讨论</a>中发现原来generator并不是设计用来处理异步编程/回掉的，它本质上应该是协程。我现在有这样的疑问：
+<strong>1，generator的出现是为了解决什么问题，它的本质就是协程吗？</strong>
+<strong>2，在什么样的场景下应该使用generator？</strong>
+（PS：我目前在项目中使用了大量的Promise来解决异步调用，写法看起来也很像是同步，例如
+Promise.resolve()
+.then(doSomething1)
+.then(doSomething2)
+.then(doSomething3)
+.catch(catchError)
+感觉这样代码可读性也好，不知道引入generator来改写会不会有什么好处）</p>
+</div>

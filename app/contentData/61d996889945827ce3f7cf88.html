@@ -1,0 +1,33 @@
+<div class="markdown-text"><p>好像没有人讨论过trace相关的话题,感觉很实用呢
+nodejs支持异步函数获取上下文的跟踪了,这个有坑吗
+<a href="https://devdocs.io/node/async_context#AsyncLocalStorage">class AsyncLocalStorage</a></p>
+<pre class="prettyprint"><code>const http = require(&#x27;http&#x27;);
+const { AsyncLocalStorage } = require(&#x27;async_hooks&#x27;);
+
+const asyncLocalStorage = new AsyncLocalStorage();
+
+function logWithId(msg) {
+  const id = asyncLocalStorage.getStore();
+  console.log(&#96;${id !== undefined ? id : &#x27;-&#x27;}:&#96;, msg);
+}
+
+let idSeq = 0;
+http.createServer((req, res) =&gt; {
+  asyncLocalStorage.run(idSeq++, () =&gt; {
+    logWithId(&#x27;start&#x27;);
+    &#x2F;&#x2F; Imagine any chain of async operations here
+    setImmediate(() =&gt; {
+      logWithId(&#x27;finish&#x27;);
+      res.end();
+    });
+  });
+}).listen(8080);
+
+http.get(&#x27;http:&#x2F;&#x2F;localhost:8080&#x27;);
+http.get(&#x27;http:&#x2F;&#x2F;localhost:8080&#x27;);
+&#x2F;&#x2F; Prints:
+&#x2F;&#x2F;   0: start
+&#x2F;&#x2F;   1: start
+&#x2F;&#x2F;   0: finish
+&#x2F;&#x2F;   1: finish
+</code></pre></div>

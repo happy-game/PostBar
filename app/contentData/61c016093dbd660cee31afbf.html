@@ -1,0 +1,45 @@
+<div class="markdown-text"><p><img src="https://pic4.zhimg.com/80/v2-681e17cb02e91c3b082aeefb17f32593_1440w.png" alt="logo@1x.png"></p>
+<blockquote>
+<p>一个轻量的 Web IDE UI 框架
+Github: <a href="https://github.com/DTStack/molecule">https://github.com/DTStack/molecule</a></p>
+</blockquote>
+<h2>简介</h2>
+<p><a href="https://github.com/DTStack/molecule">Molecule</a> 是一个受 <a href="https://github.com/microsoft/vscode">VS Code</a> 启发，使用 <a href="https://reactjs.org/">React.js</a> 构建的 <strong>Web IDE UI</strong> 框架。通过一种类似 VS Code 扩展机制（Extension），可快速、轻松搭建一个高度抽象的 <strong>Web IDE UI</strong> 系统。同时基于 Monaco Editor，内置集成了 QuickAccess 和 Keybinding 等功能，并提供了简单的 API 以供使用。</p>
+<p>得益于<strong>扩展机制</strong>和 <strong>React 组件化</strong>技术，Molecule 可以针对例如 <strong>Workbench UI、</strong> <strong>ColorTheme</strong> 、<strong>自定义热键</strong>、<strong>快捷访问</strong>等功能进行自定义扩展。另外，开发者可将<strong>业务代码</strong>和 IDE UI 架构<strong>解耦</strong>，在保持业务高速迭代的同时，<strong>产品交互体验</strong>依然保持良好的<strong>可持续进化能力。</strong></p>
+<p><img src="https://pic1.zhimg.com/80/v2-4589dcf6f33e19cf5c64081a0b8a3c20_1440w.jpg" alt="workbench.png"></p>
+<h2>动机</h2>
+<p><a href="https://www.dtstack.com/dtinsight/">数栈（DTInsight）</a> 中例如<strong>离线、实时任务开发，算法开发</strong>等产品，它们的直接使用人员大部分都是<strong>开发者，<strong>需要在 Web 上完成</strong>代码编写，调试</strong>等工作。所以，我们也希望给开发人员创造一个良好的在线 IDE 开发体验。</p>
+<p><img src="https://pic4.zhimg.com/80/v2-3f195a53a2bb341e6ada0fee2a6bb9e7_1440w.jpg" alt="ide-v3.png"></p>
+<p><em>早期的</em>数栈开发平台</p>
+<p>上图中的 RD-OS 是我们数栈开发平台早期的版本，当时产品功能本身比较简单。前端在初期的实现上，基于 React + Ant Design + Codemirror 来搭建的整个 IDE UI 界面。另外，由于当时我们多个产品都有这个 Workbench 的场景，我们还抽象了一个简单且单纯 的 IDE Workbench UI 的 React 组件，以供其他产品复用。</p>
+<p><img src="https://pic3.zhimg.com/80/v2-230216b41969f1037dd9f364983e1d8a_1440w.jpg" alt="ide-v4.png"></p>
+<p><em>当前的 Web IDE 版本</em></p>
+<p>随着业务发展，产品不断的迭代，整个页面的功能也变得十分<strong>密集和复杂。<strong>产品布局、视觉、交互等一直在更新和变化，上图已经是我们最新的版本设计。然而，在面对这些新的</strong>交互、视觉</strong>上的诉求时，早期<strong>简单堆叠</strong>的技术架构就会显得有些捉襟见肘了。设计师新出的方案，由于<strong>改造成本</strong>很高，比较难以实施。</p>
+<p>大约 2019 年左右，团队和产品交流了市面上做的比较好的 Web IDE 产品，如 <a href="https://github.com/c9">Cloud9 IDE</a>、<a href="https://github.com/microsoft/vscode">VS Code</a>、<a href="https://github.com/eclipse-theia/theia">Eclipse Theia</a> 等。这些产品都有非常好的 UI 抽象，扩展性很好，定制主题等功能也比较方便。但是这些产品功能比较完整的 IDE，应用到我们产品，就显得有点重，而且对团队技术挑战较大，最重要的是技术<strong>迁移成本</strong>也比较高，自定义 UI 也不够灵活。</p>
+<p>基于这些问题的考虑，团队试图寻找出一种平衡方案。我们希望这个方案有很好的 <strong>UI 抽象便于新增功能、UI 可</strong>自定义、定制 ColorTheme 简单、React 项目无缝衔接，让产品交互有比较方便的持续进化能力。在对 VS Code 源码研究了一番之后，我们便萌生了 Molecule 这个项目的想法。</p>
+<h2>核心功能</h2>
+<p>我们参考了 VS Code 的设计，对 UI 抽象、编辑器、颜色主题等等重新进行了梳理，Molecule 目前的核心功能如下：</p>
+<ul>
+<li>内置 React 版本的 Visual Studio Code <strong>Workbench</strong> UI</li>
+<li>基本兼容 Visual Studio Code 的 <strong>ColorTheme</strong></li>
+<li>支持使用 React 组件自定义 <strong>Workbench</strong> UI 样式</li>
+<li>内置 Monaco Editor <strong>Command Palette</strong>、<strong>Keybinding</strong>等模块，并支持扩展</li>
+<li>支持 <strong>i18n</strong>，内置简体中文、English 等两种语言</li>
+<li>内置一个简单的 <strong>Settings</strong> 模块，支持在线编辑修改以及扩展</li>
+<li>内置默认的 <strong>Explorer</strong>, <strong>Search</strong> 等组件，并支持扩展</li>
+<li>Typescript</li>
+</ul>
+<p><img src="https://pic2.zhimg.com/80/v2-e69f30e88de4d8890e709d912c242981_1440w.jpg" alt="Workbench Parts"></p>
+<p>上图是重新抽象的 Workbench UI。基于一个简单的扩展（Extension），如 <strong>Workbench</strong>、<strong>ColorTheme</strong>、<strong>QuickAccess</strong>、<strong>Keybinding</strong>、<strong>i18n</strong>、<strong>Settings</strong> 等等功能，通过 Molecule 内置的服务，可以轻松的使用和扩展。</p>
+<h2>与其他开源的 Web IDE 的区别？</h2>
+<ul>
+<li>React.js 应用无缝接入</li>
+<li>基于  React.js 的组件库，更好的 <strong>UI 自定义</strong>能力</li>
+<li>基本兼容了 VS Code  上千种 ColorTheme 扩展</li>
+<li>Molecule 只是一个单纯的 <strong>Web IDE</strong> <strong>UI 交互</strong>框架，不涉及例如<strong>文件系统</strong>、<strong>版本管理</strong>、 <strong>LSP、DAP</strong>、<strong>Terminal</strong> 等更复杂的 IDE 功能，需要开发者自己手动实现。</li>
+</ul>
+<h2>如何使用?</h2>
+<p>请阅读<a href="https://dtstack.github.io/molecule/docs/quick-start">快速开始</a>文档。</p>
+<h2>接下来的规划</h2>
+<p>Molecule 当前还是一个 <strong>Beta</strong> 版本，很多 API 还不够稳定。早期参考了一些 VS Code 的设计概念，API 设计不够简单；目前默认的 Workbench 是 VS Code 版本的布局，后期会考虑丰富布局（Layout）系统；Color Theme 交互还有很多细节需要优化。</p>
+</div>

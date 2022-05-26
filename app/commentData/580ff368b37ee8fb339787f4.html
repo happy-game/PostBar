@@ -1,0 +1,56 @@
+<div class="markdown-text"><p><a href="/user/hyj1991">@hyj1991</a> github 已邀请.
+framework 那块, 如下图. (摘自我们团队在 jsconf 的 <a href="https://github.com/atian25/blog/blob/master/assets/files/egg%20-%20JSConf%20China%202016.pdf">slide</a>)
+<img src="//static.cnodejs.org/FuMKT7C6SmKgGJVGzR2rsw4hNAoL" alt="egg-architecture.png">
+其实对于一线开发者来说, 不会直接接触到 egg 的, 团队的架构师或技术负责人, 可以封装一个适合自己业务场景的框架.
+<strong>一个大规模的团队需要遵循一定的约束和约定</strong>, 这个约定的产出物的落地就是 framework.</p>
+<ul>
+<li>如 chair 是适合蚂蚁那边的业务场景的, 集成了很多他们内部的插件, 提供了很多蚂蚁+阿里的基础能力.</li>
+<li>如 nut 是适合 UC 这边的, 支持了我们的私有云/自动发布系统/前端工程化体系等很多特性.</li>
+<li>还有适合开发自己公司内部应用的, 集成了登陆鉴权/操作日志/权限控制等插件, 这样开发者就不用太多配置, 框架层会做好适配</li>
+<li>如 <a href="https://github.com/eggjs/aliyun-egg">aliyun-egg</a> 是开箱即用的, 适合托管到阿里云平台的 egg 上层框架, 集成了 alinode / oss / rds 等等插件.</li>
+<li>未来也可以有人封装一个 social-egg 之类的框架, 直接集成了 wechat/支付宝/qq 等功能来做一个开放平台后台的框架, 都有可能.</li>
+<li>插件和框架里面除了 controller 和 router, 和应用区别不大
+<ul>
+<li>故我们甚至可以在框架里面集成一些公共的 service / helper 等逻辑</li>
+<li>集成公共插件</li>
+<li>还可以用 egg 的 loader 机制去加载自定义文件,
+<ul>
+<li>如 <code>app/model/*.js -&gt; app.model.user.create()</code></li>
+<li>如 <code>app/db/**/*.js</code>, <code>app/rpc/**/*.js</code></li>
+<li>如 <a href="https://github.com/eggjs/egg-view-nunjucks">egg-view-nunjucks</a> 里面实现的 <code>app/filters/*.js</code> 文件的加载</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><strong>egg 本身是不包含阿里内部任何逻辑的,  并且具备高度的可定制性, 故有兴趣的同学都可以在它之上搭建适合自己的框架, 不一定要从头来过</strong>, 毕竟这是一个轮子套轮子的前端时代. 专业的人做专业的事, 社区可以去共建这些插件, 如 <a href="https://github.com/eggjs/egg-security">egg-security</a></li>
+</ul>
+<hr>
+<p>参与到 egg 的方式其实很简单:</p>
+<ul>
+<li><strong>egg 完全遵循 github 的开源协作模式</strong>
+<ul>
+<li>所有的提案和讨论, 都通过 <a href="https://github.com/eggjs/egg/issues">github issue</a> 的方式去讨论</li>
+<li>我们倡导并亲身践行这种 <code>硬盘式异步协作模式</code>
+<ul>
+<li>曾经无数次我对 egg 的某个设计点有疑问时, 有人会丢给我一个 url, 去看当时大家的讨论和结论</li>
+<li>曾经无数次在深夜看到来自十几个不同团队的参与者, 在 issue 里面讨论的热火连天</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>参与方式
+<ul>
+<li>使用 egg, 遇到问题或好点子, 给我们发 issue</li>
+<li>编写插件并开源给社区</li>
+<li>使用心得 &amp;&amp; 文档补全</li>
+<li>通过 pull request 的方式去贡献代码</li>
+<li>…</li>
+</ul>
+</li>
+</ul>
+<hr>
+<ul>
+<li>parent 没场景的时候其实可以无视掉, 可以是你自己的一个启动脚本, 如这边有个团队的启动脚本里面, 会同时启动 nginx 和 egg, 所以在 parent 里面需要通过事件获取到 master/agent/app 的一些运行状态. 这个脚本以前是 shell, 现在都是 node 写的, 因为后者才能被单元测试覆盖.</li>
+<li>agent 那个, 看具体场景吧, 从以往实践来看, 总会需要有一个进程来为大家做一些事, 如上面说的几点, 还有类似 <a href="https://github.com/eggjs/egg-logrotator">egg-logrotator</a> 里面切割日志文件等场景. 所以 egg 单独把这个进程的概念明确出来.</li>
+</ul>
+</div>

@@ -1,0 +1,5 @@
+<div class="markdown-text"><p><a href="/user/dbit-xia">@dbit-xia</a>
+我这边就是记录上下文的traceid出问题了，建议直接使用请求上下文req绑定traceid。
+如果你用async_hooks来记录traceid就要保证，你这个中间件是第一个执行，因为async_hooks原理就是坚定某个回调里面的全关联。
+而且你这个traceid作为了全局唯一值，真的很容易出错。</p>
+</div>

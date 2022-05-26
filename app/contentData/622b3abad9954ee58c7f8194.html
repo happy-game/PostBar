@@ -1,0 +1,39 @@
+<div class="markdown-text"><p>回答这样的问题之前，我们需要先了解一下，究竟什么是 IDE？
+IDE 即Integrated Development Environment，是集成开发环境的英文缩写。顾名思义，IDE 就是一个集代码编写、分析、编译、调试等功能为一体的应用程序。
+第一个真正意义上的 IDE 是 1964 年发布的 Dartmouth BASIC IDE（即 Basic 的前身）。当时的 IDE 采用命令列的方式来操作，而且仅具有一些简单的功能。
+通常情况下，开发人员可以根据自己的偏好来选择不同的IDE来完成开发工作。甚至有网站（<a href="https://pypl.github.io/IDE.html%EF%BC%89">https://pypl.github.io/IDE.html）</a>
+根据谷歌上下载的搜索频率给IDE进行了排名，截至目前排名前三的是：Visual Studio、Eclipse、Visual Studio Code。
+<img src="//static.cnodejs.org/FiOjua1SCr1ncG4FqWh-T_ns-dlU" alt="L1.png">
+这些榜前的 IDE 有着不同的设计风格，各自拥有庞大的用户基础，下面我们就来分析对比一下。</p>
+<p><strong>Visual Studio</strong>
+Visual Studio 是微软开发的一款IDE，广泛用于windows平台。Visual Studio可以根据用户需要，选择和安装多个语言的编译环境，比如C++、C#、VB。正因为如此，其安装包一般都比较大，安装时间也会比较长。
+Visual Studio 很多操作都是图形化页面，易于理解。安装完毕后即可开始新建项目并进行编码。
+<img src="//static.cnodejs.org/FgZ3voNGMA3oz-4n9dIJzf4WgZH1" alt="L2.png"></p>
+<p><strong>VSCode</strong>
+VSCode是微软推出的一款可扩展的轻量级编辑器。VSCode的页面非常简洁，用户可以根据需要安装第三方插件，并且VSCode还支持跨平台。虽说是个编辑器，但IDE具有的功能VSCode也是有的，比如语法高亮、括号匹配、自动补全等，同时还支持Git。对于C语言开发来说，使用VSCode时，用户需要下载和安装本地编译器（GC/VC++/Clang）然后配置环境变量。具体可查看官网文档（<a href="https://code.visualstudio.com/docs/cpp/config-mingw%EF%BC%89%E3%80%82%E4%B9%8B%E5%90%8E%E6%89%8D%E8%83%BD%E7%BC%96%E8%AF%91%E8%BF%90%E8%A1%8C%E4%BB%A3%E7%A0%81%E3%80%82">https://code.visualstudio.com/docs/cpp/config-mingw）。之后才能编译运行代码。</a>
+<img src="//static.cnodejs.org/Fgx1rtohzb69KsDAsWoDac4_k0uG" alt="L3.png"></p>
+<p><strong>CLion</strong>
+CLion是JetBrains旗下的一款跨平台C/C++IDE开发工具，提供了智能编辑器、自动代码重构、代码分析、评估表达式等多种功能。CLion支持GCC、clang、MinGW、Cygwin 编译器以及 GDB 调试器。使用CLion开发C语言，开发者需要下载和安装本地编译器，并配置环境变量。CLion免费试用30天后需要付费，每月需要支付$8.9。
+<img src="//static.cnodejs.org/Fvj71GLvAvmiThqF9Dww-mYYk2Pn" alt="L4.png"></p>
+<p><strong>Lightly</strong>
+Lighty是今天要给大家介绍的产品，它是TeamCode旗下一款IDE，分为客户端和在线版。在Lighlty上用户不需要配置任何编译运行环境，选择开发语言后即可开始写代码。代码和项目文件可以实时保存在云端的，换台电脑后照样继续编码。Lightly页面简洁明了，支持跨平台、支持多人实时在线协作编码。
+<img src="//static.cnodejs.org/FmvROSC8KECHgL8Kx2SNaL_XaTZf" alt="IDE对比表格.png"></p>
+<p>Lightly的使用流程也非常简单：</p>
+<ul>
+<li>进入官网（Lightly (<a href="http://teamcode.com">teamcode.com</a>)）点击注册登录。支持手机验证码登录，也可以使用微信、QQ扫码登录。
+<img src="//static.cnodejs.org/FisycHbUHnHLLVvTGDLZ5RqfVSeK" alt="L5.png"></li>
+<li>点击新建项目，输入项目名称，选择C语言。即可完成项目新建。
+<img src="//static.cnodejs.org/FnVmpLjA0tAqpLDvpndlt8oIze_7" alt="L6.png"></li>
+<li>在项目列表里点击刚刚新建的项目，就进入到了编码页面。Lightly默认创建了一个main.c文件，点击右上角运行按钮即可编译运行当前代码。Lightly同样支持高亮显示、智能提示、自动补全功能。
+<img src="//static.cnodejs.org/Fg-OpPGbYV7prikkZMohWtFln_n8" alt="L7.png"></li>
+<li>点击右上角邀请按钮，可以生成邀请链接，邀请其它小伙伴一起在线编码。
+<img src="//static.cnodejs.org/Fu2f1zsBcgLZDdifmaj7vrFBwTGk" alt="L8.png"></li>
+</ul>
+<p>总体看来，对于正在学习C语言的开发者来说，我非常推荐使用Lightly，因为：
+• Lightly的简单页面风格给开发者一种轻松的写代码氛围；
+• 运行环境免配置对于入门的开发者来说节约了宝贵的时间让开发者更专注于编码；
+• 在线编码，代码云端真正做到了随时随地编码；
+• 各种智能提示提高了初学者写代码的效率；
+• 多人同时在线编码对于需要协作的小伙伴来说是个不错的选择。</p>
+<p>点击<a href="https://lightly.teamcode.com/">一键注册Lightly</a>，与小伙伴一起写代码吧！</p>
+</div>

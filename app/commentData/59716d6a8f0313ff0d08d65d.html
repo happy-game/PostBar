@@ -1,0 +1,24 @@
+<div class="markdown-text"><p><a href="/user/atian25">@atian25</a>
+实在不好意思在问一个问题
+官方api示例:</p>
+<pre class="prettyprint language- js"><code>module.exports = app =&gt; {
+  class User extends app.Service {
+    * find(uid) {
+      const user = yield this.ctx.db.query(&#96;select * from user where uid = ${uid}&#96;);
+      return user;
+    }
+  }
+  return User;
+};
+
+</code></pre><p>我把Generator 换成了 ES7的Async/Await ,  想了解一个, 官方没有这么做的原因是什么?</p>
+<pre class="prettyprint language- js"><code>module.exports = app =&gt; {
+  class User extends app.Service {
+    async find(uid) {
+      let user = await this.ctx.db.query(&#96;select * from user where uid = ${uid}&#96;);
+      return user;
+    }
+  }
+  return User;
+};
+</code></pre></div>

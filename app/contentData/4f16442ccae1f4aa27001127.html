@@ -1,0 +1,53 @@
+<div class="markdown-text"><p>&lt;span style=“font-size: 20px; font-weight: bold;”&gt;背景&lt;/span&gt;
+&lt;br/&gt;
+&lt;br/&gt;VPS一般都有流量限制，很多主机也都没有提供流量监控，特别是我使用的Amazon 免费的EC2服务，超过30G/月的流量将自动从信用卡扣大把的美金，这太危险了，以前就有过惨痛的教训，因此决定为自己写一个小工具通过web来监控vps流量，从此就安心了。
+&lt;br/&gt;
+&lt;br/&gt;如果也和我一样使用EC2做VPN的，同时又爱折腾的，可尝试使用。
+&lt;br/&gt;
+&lt;br/&gt;这里是DEMO（请仅使用支持html5的chrome/firefox 4+/safari来访问）:   <a href="http://ec2.kongwu.net:8080/">http://ec2.kongwu.net:8080/</a>
+&lt;br/&gt;&lt;h2&gt;准备&lt;/h2&gt;
+&lt;br/&gt;正好试验下node和websocket的实时特性，原理可以参加我的另外一篇：&lt;a href=“<a href="http://cnodejs.org/blog/?p=273">http://cnodejs.org/blog/?p=273</a>” target=&quot;_blank&quot;&gt;《websocket与node.js的完美结合》&lt;/a&gt;，
+&lt;br/&gt;&lt;ul&gt;
+&lt;br/&gt;	&lt;li&gt;只能运行在linux下&lt;/li&gt;
+&lt;br/&gt;	&lt;li&gt;下载node.js&lt;/li&gt;
+&lt;br/&gt;	&lt;li&gt;下载vnstat&lt;/li&gt;
+&lt;br/&gt;&lt;/ul&gt;
+&lt;br/&gt;&lt;h2&gt;安装&lt;/h2&gt;
+&lt;br/&gt;安装node.js
+&lt;br/&gt;
+&lt;br/&gt;node.js下载地址： <a href="http://nodejs.org/dist/node-v0.4.1.tar.gz">http://nodejs.org/dist/node-v0.4.1.tar.gz</a>
+&lt;br/&gt;
+&lt;br/&gt;安装
+&lt;br/&gt;
+&lt;br/&gt;./configure; make; sudo make install
+&lt;br/&gt;
+&lt;br/&gt;安装vnstat
+&lt;br/&gt;
+&lt;br/&gt;vnstat下载地址： <a href="http://humdi.net/vnstat/vnstat-1.10.tar.gz">http://humdi.net/vnstat/vnstat-1.10.tar.gz</a>
+&lt;br/&gt;
+&lt;br/&gt;安装
+&lt;br/&gt;
+&lt;br/&gt;make; sudo make install
+&lt;br/&gt;
+&lt;br/&gt;下载并解压monsocket： <a href="http://cnodejs.googlecode.com/files/monsocket0.1.tar.gz">http://cnodejs.googlecode.com/files/monsocket0.1.tar.gz</a>
+&lt;br/&gt;
+&lt;br/&gt;使系统在后台运行：
+&lt;br/&gt;
+&lt;br/&gt;&lt;pre&gt;&lt;code&gt;nohup node mon-server.js &gt;/dev/null 2&gt;&amp;1 &amp;&lt;/pre&gt;&lt;/code&gt;
+&lt;br/&gt;
+&lt;br/&gt;另外对于使用亚马逊免费云计算服务Ec2的人（比如我）来说，还提供了一种简单的自动流量控制，当流量快达到上线时，自动发送邮件，并且强制关闭vpn服务，这样就不用担心由于流量超限，被扣掉白花花的美金了。
+&lt;br/&gt;
+&lt;br/&gt;将这个特别定制脚本加入到crontab中去：
+&lt;br/&gt;
+&lt;br/&gt;&lt;pre&gt;&lt;code&gt;0 0  * * * /home/ec2-user/projects/cnodejs/monsocket/vpsmon/ec2freecheck.sh&lt;/pre&gt;&lt;/code&gt;
+&lt;br/&gt;&lt;h2&gt;总结&lt;/h2&gt;
+&lt;br/&gt;这个非常简单的东西，只可以实时监控到每天的vpn流量，又可以避免流量超过限制。
+&lt;br/&gt;
+&lt;br/&gt;如果你也如我般想测试下node和websocket，同时也爱折腾，可以试试，所有代码下载地址如下：
+&lt;br/&gt;
+&lt;br/&gt;<a href="http://cnodejs.googlecode.com/files/monsocket0.1.tar.gz">http://cnodejs.googlecode.com/files/monsocket0.1.tar.gz</a>
+&lt;br/&gt;
+&lt;br/&gt; 
+&lt;br/&gt;
+&lt;br/&gt;</p>
+</div>

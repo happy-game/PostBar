@@ -180,3 +180,25 @@ if __name__ == '__main__':
     posts = getPosts(postList, 'https://cnodejs.org/api/v1/topic/')
     usersF, postsF, reqpiesF = dataFormat(posts)
     addData(usersF, postsF, reqpiesF)
+
+
+
+
+
+
+def modifyData():
+    db = pymysql.connect(host='121.5.70.212',
+                         user='root',
+                         password='0nishishabi.',
+                         database='mydb')
+    cursor = db.cursor()
+    sql = "ALTER TABLE Posts ADD lastReplyTime DATETIME NOT NULL DEFAULT '2002-01-01 00:00:00' AFTER visitCount ;"
+    resultNumber = cursor.execute(sql)
+    sql = "SELECT postID, MAX(`Time`) FROM Comments GROUP BY postID;"
+    resultNumber = cursor.execute(sql)
+    allData = cursor.fetchall()
+    sql = "UPDATE Posts SET lastReplyTime = %s WHERE postID = %s ;;"
+    for i in range(resultNumber):
+        innerResultNumber = cursor.execute(sql, (allData[i][1], allData[i][0]))
+    cursor.close()
+    db.close()

@@ -1,0 +1,54 @@
+<div class="markdown-text"><p>新版 <a href="https://github.com/avwo/whistle">Whistle</a>（<code>v2.9.15+</code>）新增如下命令行功能**（目前只支持 Mac &amp; Windows 系统）**：</p>
+<ol>
+<li><code>w2 proxy</code>：设置系统代理</li>
+<li><code>w2 ca</code>：安装系统根证书</li>
+<li><code>w2 start --init</code>：启动（重启）Whistle 时设置系统代理和安装根证书</li>
+</ol>
+<p><strong>用途如下：</strong></p>
+<h1>一键安装 Whistle（Mac &amp; Windows）</h1>
+<blockquote>
+<p>如果没有安装 Node，请求先安装：<a href="https://nodejs.org/en/">https://nodejs.org/en/</a></p>
+</blockquote>
+<pre class="prettyprint language- sh"><code>npm i -g whistle &amp;&amp; w2 start --init
+</code></pre><blockquote>
+<p>如果全局代理需要设置不代理的域名，可以采用：<code>npm i -g whistle &amp;&amp; w2 start --init &quot;domain1, domain2, *.domain&quot;</code></p>
+</blockquote>
+<p>上述命令分别为以下操作：</p>
+<ol>
+<li>安装 Whistle</li>
+<li>启动 Whistle ，同时设置系统代理（或不代理的白名单域名）及安装根证书</li>
+</ol>
+<p>设置代理及安装根证书时可能需要以下协助操作：</p>
+<h3>Mac</h3>
+<ol>
+<li>
+<p><strong>输入开机密码</strong>设置系统代理：
+<img src="https://p6-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/1f936fcc4743470fb35cf903c0960690~tplv-k3u1fbpfcp-watermark.image?" alt="pass.png"></p>
+</li>
+<li>
+<p>**指纹验证（或输入开机密码）**安装根证书：</p>
+</li>
+</ol>
+<p><img src="https://p9-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/1bfce8a596db4598a7154348a12f3ee4~tplv-k3u1fbpfcp-watermark.image?" alt="image-1652150957522.png"></p>
+<h3>Windows</h3>
+<p>点击 “<strong>是(Y)</strong>” 按钮确定安装根证书：</p>
+<p><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/95be230d2a2a4e3898d62a7b81db4ff4~tplv-k3u1fbpfcp-watermark.image?" alt="win.jpeg"></p>
+<p>最后可以通过 Chrome 打开 Whistle 的管理界面（ <a href="http://local.whistlejs.com">http://local.whistlejs.com</a> ）查看抓包及配置规则调试请求。</p>
+<h1>设置系统代理（w2 proxy）</h1>
+<ol>
+<li><code>w2 proxy</code>：设置系统代理 <code>127.0.0.1:port</code>，<code>port</code> 为当前系统运行的 Whistle 端口（如果没有取默认值 <code>8899</code>）</li>
+<li><code>w2 proxy 8080</code>：设置系统代理 <code>127.0.0.1:8080</code></li>
+<li><code>w2 proxy xxx.yyy.com:8080</code>：设置系统代理 <code>xxx.yyy.com:8080</code>（可以指向远程 Whistle、Nohost 等代理）</li>
+<li><code>w2 proxy xxx.yyy.com:8080 -x &quot;www.test.com, www.abc.com, *.xxx.com&quot;</code>：设置系统代理 <code>xxx.yyy.com:8080</code>，并设置不代理请求域名（<code>www.test.com, www.abc.com, *.xxx.com</code>）</li>
+<li><code>w2 proxy --off</code>：关闭系统代理</li>
+</ol>
+<h1>安装根证书（w2 ca）</h1>
+<ol>
+<li><code>w2 ca</code>：安装本地运行的 Whistle 实例根证书（自动检测当前运行的默认实例，如果没有取默认取 <code>8899</code> 端口）</li>
+<li><code>w2 ca 8888</code>：安装本地 <code>8888</code> 端口的 Whistle 根证书</li>
+<li><code>w2 ca xxx.yyy.com:8080</code>：安装运行在 <code>host</code> 和 <code>port</code> 的其它 Whistle 或 Nohost 的根证书</li>
+<li><code>w2 ca filepath</code>：安装本地文件 <code>filepath</code> 存储的根证书</li>
+<li><code>w2 ca url</code>：安装指定 url 存储的根证书</li>
+</ol>
+<p>了解更多内容请访问 GitHub ：<a href="https://github.com/avwo/whistle">https://github.com/avwo/whistle</a></p>
+</div>

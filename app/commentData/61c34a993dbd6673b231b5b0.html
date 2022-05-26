@@ -1,0 +1,4 @@
+<div class="markdown-text"><p><a href="/user/xiaoxiaojx">@xiaoxiaojx</a> 我找到解决方案了。
+<code>delete require.cache[]</code> 数组里面填写的不能是moduleName，因为之前require失败，缓存里面找不到moduleName对应的地址。
+应该改成<code>path.resolve(process.cwd(), 'node_modules', moduleName)</code>就可以成功删除了。</p>
+</div>

@@ -1,0 +1,125 @@
+<div class="markdown-text"><h2>引言</h2>
+<blockquote>
+<p>凡是可以用 JavaScript 来写的应用，最终都会用 JavaScript 来写 | Atwood 定律</p>
+</blockquote>
+<p>目前市面上出现的大多数与 NodeJS 相关的框架，基本都将 NodeJS 定位在<code>工具层</code>、<code>中间层</code>、<code>代理层</code>，很少在业务层面进行深耕，认为这是 JAVA 的领域，NodeJS 不适合。这种思潮明显是与<code>Atwood 定律</code>相悖的</p>
+<p>如果您想感受<code>与众不同</code>的 NodeJS 全栈开发体验，一定要试试<code>自带工作流引擎</code>的 CabloyJS 全栈开源框架。为了提升业务层面的开发效率和开发体验，CabloyJS 在前端和后端均提供了大量实用的工具和组件</p>
+<h2>CabloyJS 4.12</h2>
+<p>CabloyJS从<code>4.11</code>升级到<code>4.12</code>，历时5个月，Github提交数从<code>6000+</code>一路肝到<code>8000+</code>，这次的功能更新绝对是诚意满满，一次爽到爆</p>
+<ul>
+<li><strong>新增特性</strong>
+<ul>
+<li>数据：增加 <code>simple</code> 模式
+<ul>
+<li>
+<p>默认的业务数据都具有生命周期，即三个阶段：<code>草稿</code>、<code>正式</code>、<code>历史</code>。<code>草稿</code>到<code>正式</code>之间还可以加入<code>审批流</code></p>
+</li>
+<li>
+<p>新增的<code>simple</code>模式，就是可以简化业务数据的生命周期，只保留<code>正式</code>版本，从而满足一些简单业务数据的管理</p>
+</li>
+</ul>
+</li>
+<li>脏标记机制：所有Form表单均支持<code>脏标记</code>机制。当有字段值变动时，Form表单标题就会有醒目提示，并且当关闭当前表单页面时，也会提示用户<code>表单数据没有保存</code></li>
+<li>测试：增加新的测试模块<code>test-note</code>
+<ul>
+<li>演示<code>数据列表</code>的布局切换：列表/卡片/表格</li>
+<li>演示<code>数据条目</code>的布局切换：信息/正文(Markdown)</li>
+<li>演示如何增加<code>便签</code>部件，从而可以在<code>仪表板</code>中直接编辑和查看便签数据</li>
+</ul>
+</li>
+<li>测试：<code>test-party</code> 模块
+<ul>
+<li>演示如何增加<code>简单聊天</code>部件，从而可以在<code>仪表板</code>中进行直接的聊天互动</li>
+</ul>
+</li>
+<li>工作流引擎：
+<ul>
+<li>增加<code>转办</code></li>
+<li>增加<code>代办</code></li>
+</ul>
+</li>
+<li>工作流引擎：
+<ul>
+<li>增加<code>行为</code>机制：从而实现与 activiti 中<code>边界事件</code>所对应的应用场景
+<ul>
+<li>一个<code>节点</code>可以附加多个<code>行为</code></li>
+<li><code>行为</code>可以指定专属的<code>边</code>，从而进行<code>节点</code>的迁移</li>
+</ul>
+</li>
+<li>增加一个具体的<code>行为</code>实现: <code>超时处理</code>
+<ul>
+<li>可以指定某个<code>审批节点</code>的超时行为，一旦超时就跳转到指定的流程节点</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>工作流引擎：
+<ul>
+<li>增加<code>网关节点</code>，包括：
+<ul>
+<li>
+<p><code>排他网关</code></p>
+</li>
+<li>
+<p><code>并行网关</code></p>
+</li>
+<li>
+<p><code>包含网关</code></p>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>数据字典：
+<ul>
+<li>支持版本控制</li>
+<li>支持对字典单独授权</li>
+<li>支持多级树形字典</li>
+<li>内置：美国城市区划、中国城市区划</li>
+<li>通用的后端逻辑处理</li>
+<li>通用的前端渲染组件</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><strong>增强</strong>
+<ul>
+<li>Markdown：实现了一个<code>所见即所得</code>的<code>Markdown富文本编辑器</code>，<strong>绝对好用，一定要体验一下</strong></li>
+<li>JSON：重构了带格式化的<code>JSON编辑器</code></li>
+</ul>
+</li>
+</ul>
+<h2>文档与教程：</h2>
+<p>伴随着CabloyJS 4.12新版功能的推出，还全新制作了一套教程。为了体现CabloyJS<code>低代码的开箱即用</code>和<code>专业代码的灵活定制</code>，教程也由浅到深相应的分为几个部分：</p>
+<ol>
+<li>
+<p><a href="https://cabloy.com/zh-cn/articles/c8f7c13d56a94b75b6bbf84f0471ef24.html">教程：业务表单与审批流</a></p>
+</li>
+<li>
+<p><a href="https://cabloy.com/zh-cn/articles/b0d03442aeac43eda2ef16556ad203d1.html">教程：博客</a></p>
+</li>
+<li>
+<p><a href="https://cabloy.com/zh-cn/articles/85817f4eda93449fab67bc9bf0633633.html">教程：文档</a></p>
+</li>
+<li>
+<p><a href="https://cabloy.com/zh-cn/articles/85817f4eda93449fab67bc9bf0633633.html">教程：社区</a></p>
+</li>
+<li>
+<p><a href="https://cabloy.com/zh-cn/articles/98c7ad5fb03748e29a69236a5418400b.html">教程：第三方平台</a></p>
+</li>
+<li>
+<p><a href="https://cabloy.com/zh-cn/articles/532e6433c1154a7587ae9d3ccb1242fc.html">进阶</a></p>
+</li>
+</ol>
+<h2>演示站点</h2>
+<p>通过这套教程，可以让我们更快的了解CabloyJS的开发风格，以及可以用来做哪些事情。欢迎大家尝鲜、拍砖</p>
+<p>也可以在阅读教程的同时，直接浏览CabloyJS的演示站点，增加更直观的感性认知</p>
+<ul>
+<li>演示站点：<a href="https://test.cabloy.com/">https://test.cabloy.com/</a></li>
+</ul>
+<p>为了体验与众不同的<code>pc=mobile+pad</code>自适应布局风格，一定要分别用<code>PC</code>和<code>Mobile</code>单独体验演示站点。<strong>此言不虚，请您品鉴</strong>！！！</p>
+<ul>
+<li>演示站点的二维码：
+<img src="https://admin.cabloy.com/api/a/file/file/download/d8cedc9dd14e4a10a06ba1627b6ed1a1.png" alt="cabloy-test"></li>
+</ul>
+</div>

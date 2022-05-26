@@ -1,0 +1,40 @@
+<div class="markdown-text"><p>class IotDevice extends EventEmitter {
+constructor({serverAddress = “127.0.0.1:8883”, productName, deviceName, secret, clientID, storePath} = {}) {
+super();
+this.serverAddress = <code>mqtts://${serverAddress}</code>
+…
+}</p>
+<p>handleCommand({commandName, requestID, encoding, payload, expiresAt, commandType = “cmd”}) {
+…
+var self = this
+var <strong><em>respondCommand</em></strong> = function (respData) {
+var topic = <code>${commandType}_resp/${self.productName}/${self.deviceName}/${commandName}/${requestID}/${new ObjectId().toHexString()}</code>
+self.client.publish(topic, respData, {
+qos: 1
+})
+module.exports = IotDevice;</p>
+<blockquote>
+<ul>
+<li>
+<ul>
+<li>
+<pre class="prettyprint"><code>	在下面的另一个文件中引用上面模块中的handleCommand的内嵌函数respondCommand，这个方法对不对，如果可以请讲一下，怎样的情况下能这样引用？
+</code></pre></li>
+</ul>
+</li>
+</ul>
+</blockquote>
+<p>var IotDevice = require(&quot;…/sdk/iot_device&quot;)
+require(‘dotenv’).config()
+var path = require(‘path’);</p>
+<p>var device = new IotDevice({
+productName: process.env.PRODUCT_NAME,
+…
+})
+device.on(“command”, function (command, data, <strong><em>respondCommand</em></strong>) {
+if (command == “ping”) {
+console.log(<code>get ping with: ${data.readUInt32BE(0)}</code>)
+		…
+		<strong><em>respondCommand(buf)</em></strong>
+}</p>
+</div>

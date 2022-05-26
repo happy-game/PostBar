@@ -1,0 +1,507 @@
+<div class="markdown-text"><p>原发在掘金，掘金是越来越烂了。
+<a href="https://juejin.cn/post/7073156371008454663">https://juejin.cn/post/7073156371008454663</a></p>
+<h2>楔子</h2>
+<p><a href="https://developer.mozilla.org/zh-CN/docs/Web/API/Window/postMessage">postMessage</a> 常见于内嵌 <code>iframe</code> 或是 <code>Web Workers</code> 中，用于跨页面（线程） 的消息通信，在一些其他开发环境中也能看到类似的影子，如 Chrome 插件环境、Electron 环境、figma 插件等。</p>
+<p>最近的工作需要经常与 <code>iframe</code> 与 <code>Web Workers</code> 打交道，处理页面与内嵌页、主线程与 worker 通信，撸了个用于处理浏览器消息通信的处理的工具库 <a href="https://github.com/kinglisky/rpc-shooter">rpc-shooter</a>，涵盖了浏览器主要的消息通信的接口支持：</p>
+<ul>
+<li><a href="https://developer.mozilla.org/zh-CN/docs/Web/API/Window/postMessage">Window</a></li>
+<li><a href="https://developer.mozilla.org/zh-CN/docs/Web/API/Worker/postMessage">Worker</a></li>
+<li><a href="https://developer.mozilla.org/zh-CN/docs/Web/API/SharedWorker">SharedWorker</a></li>
+<li><a href="https://developer.mozilla.org/zh-CN/docs/Web/API/ServiceWorker">ServiceWorker</a></li>
+<li><a href="https://developer.mozilla.org/zh-CN/docs/Web/API/MessageChannel">MessageChannel</a></li>
+<li><a href="https://developer.mozilla.org/zh-CN/docs/Web/API/BroadcastChannel">BroadcastChannel</a></li>
+<li><a href="https://developer.mozilla.org/zh-CN/docs/Web/API/MessagePort">MessagePort</a></li>
+</ul>
+<p>在此分享一些开发过程中的经验与技巧。</p>
+<h2>原教旨主义</h2>
+<p>先来看一个 <code>iframe</code> 父子级页面通信的例子：</p>
+<pre class="prettyprint language-javascript"><code>&#x2F;&#x2F; parent.js
+const childWindow = document.querySelector(&#x27;iframe&#x27;).contentWindow;
+window.addEventListener(&#x27;message&#x27;, function (event) {
+    const data = event.data;
+    if (data.method === &#x27;do_something&#x27;) {
+        &#x2F;&#x2F; ... handle iframe data
+        childWindow.postMessage({
+            method: &#x27;re:do_something&#x27;,
+            data: &#x27;some data&#x27;,
+        });
+    }
+});
+
+&#x2F;&#x2F; iframe.js
+window.top.postMessage(
+    {
+        method: &#x27;do_something&#x27;,
+        data: &#x27;ifame data&#x27;,
+    },
+    &#x27;*&#x27;
+);
+window.addEventListener(&#x27;message&#x27;, function (event) {
+    const data = event.data;
+    if (data.method === &#x27;re:do_something&#x27;) {
+        &#x2F;&#x2F; ... handle parent data
+    }
+});
+</code></pre><p>使用原教旨主义的写法可以很容写出上述代码，处理简单消息通信不会有什么问题，但针对复杂场景下跨页面（线程）通信则需要有个简单有效机制来维护消息通信。</p>
+<p>聪明的你一定想到了基于<strong>统一消息格式</strong>配合对应的消息<strong>处理策略</strong>来维护消息事件的方法调用，很简单的机制，却很好用：</p>
+<pre class="prettyprint language-ts"><code>const childWindow = document.querySelector(&#x27;iframe&#x27;).contentWindow;
+const handlers = {
+    add: (a: number, b: number) =&gt; a + b,
+    subtract: (a: number, b: number) =&gt; a - b,
+};
+window.addEventListener(&#x27;message&#x27;, function (event) {
+    const { method, args } = event.data;
+    const result = handlers[method](...args);
+    childWindow.postMessage({
+        method: &#96;re:${method}&#96;,
+        args: [result],
+    });
+});
+</code></pre><p>使用上述的处理方式，消息通信的处理维护一份策略处理函数即可，接下来的工作也是建立在此基础上的，加一点“细节”即可。</p>
+<h2>事件封装</h2>
+<p>消息通信本身是事件的一种，所以不妨往事件封装的方向靠，这时候就有很多可以借鉴的接口设计了，这里可以借鉴 <a href="https://socket.io/">socket.io</a> 的接口设计。相对与本地事件调用，消息通信则本质是监听远程服务所发出的事件，与 <a href="http://socket.io">socket.io</a> 类似：</p>
+<pre class="prettyprint language-ts"><code>&#x2F;&#x2F; client
+socket.emit(&#x27;join-in&#x27;, input.value);
+&#x2F;&#x2F; server
+socket.on(&#x27;join-in&#x27;,(user) =&gt; {...});
+</code></pre><h3>面向接口</h3>
+<p>对于一个工具函数（库）的封装设计，最好是从<strong>接口开始</strong>，接口设计可以直接决定最终工具使用形式。这也是 Typescript 带来的开发模式转变，面向接口的设计，可以帮助我们更好组装模块以达到解耦的目的。</p>
+<p>封装的接口格式定义：</p>
+<pre class="prettyprint language-ts"><code>interface RPCHandler {
+    (...args: any[]): any;
+}
+
+interface RPCEvent {
+    emit(event: string, ...args: any[]): void;
+    on(event: string, fn: RPCHandler): void;
+    off(event: string, fn?: RPCHandler): void;
+}
+</code></pre><p>基于上述定义的接口，以 <code>iframe</code> 的父子通信为例做工具库封装：</p>
+<pre class="prettyprint language-ts"><code>interface RPCHandler {
+    (...args: any[]): any;
+}
+
+interface RPCEvent {
+    emit(event: string, ...args: any[]): void;
+    on(event: string, fn: RPCHandler): void;
+    off(event: string, fn?: RPCHandler): void;
+}
+
+interface RPCMessageDataFormat {
+    event: string;
+    args: any[];
+}
+
+interface RPCMessageEventOptions {
+    currentEndpoint: Window;
+    targetEndpoint: Window;
+    targetOrigin: string;
+}
+
+class RPCMessageEvent implements RPCEvent {
+    private _currentEndpoint: RPCMessageEventOptions[&#x27;currentEndpoint&#x27;];
+    private _targetEndpoint: RPCMessageEventOptions[&#x27;targetEndpoint&#x27;];
+    private _targetOrigin: RPCMessageEventOptions[&#x27;targetOrigin&#x27;];
+    private _events: Record&lt;string, Array&lt;RPCHandler&gt;&gt;;
+
+    constructor(options: RPCMessageEventOptions) {
+        this._events = {};
+        this._currentEndpoint = options.currentEndpoint;
+        this._targetEndpoint = options.targetEndpoint;
+        this._targetOrigin = options.targetOrigin;
+        &#x2F;&#x2F; 监听远程消息事件
+        const receiveMessage = (event: MessageEvent) =&gt; {
+            const { data } = event;
+            const eventHandlers = this._events[data.event] || [];
+            if (eventHandlers.length) {
+                eventHandlers.forEach((handler) =&gt; {
+                    handler(...(data.args || []));
+                });
+                return;
+            }
+        };
+        this._currentEndpoint.addEventListener(
+            &#x27;message&#x27;,
+            receiveMessage as EventListenerOrEventListenerObject,
+            false
+        );
+    }
+
+    emit(event: string, ...args: any[]): void {
+        const data: RPCMessageDataFormat = {
+            event,
+            args,
+        };
+        &#x2F;&#x2F; postMessage
+        this._targetEndpoint.postMessage(data, this._targetOrigin);
+    }
+
+    on(event: string, fn: RPCHandler): void {
+        if (!this._events[event]) {
+            this._events[event] = [];
+        }
+        this._events[event].push(fn);
+    }
+
+    off(event: string, fn?: RPCHandler): void {
+        if (!this._events[event]) return;
+        if (!fn) {
+            this._events[event] = [];
+            return;
+        }
+        const handlers = this._events[event] || [];
+        this._events[event] = handlers.filter((handler) =&gt; handler !== fn);
+    }
+}
+</code></pre><p>经典的事件实现，这里不做赘述，使用方式如下：</p>
+<pre class="prettyprint language-ts"><code>&#x2F;&#x2F; 父级页面
+const childWindow = document.querySelector(&#x27;iframe&#x27;).contentWindow;
+const parentEvent: RPCEvent = new RPCMessageEvent({
+    targetEndpoint: window,
+    currentEndpoint: childWindow,
+    targetOrigin: &#x27;*&#x27;,
+});
+parentEvent.on(&#x27;add&#x27;, (a, b) =&gt; a + b);
+parentEvent.emit(&#x27;test&#x27;);
+
+&#x2F;&#x2F; 子级页面
+const childEvent: RPCEvent = new RPCMessageEvent({
+    targetEndpoint: window,
+    currentEndpoint: window.top,
+    targetOrigin: &#x27;&#x27;,
+});
+childEvent.emit(&#x27;add&#x27;, 1, 2);
+childEvent.on(&#x27;test&#x27;, () =&gt; {});
+childEvent.on(&#x27;max&#x27;, (a, b) =&gt; Math.max(a, b));
+childEvent.off(&#x27;max&#x27;);
+</code></pre><p>思考一个问题，上述实现了父子级 window 对象的消息通信封装，能否将其一般化支持到所有浏览器消息事件？</p>
+<p>答案是肯定的，看一眼事件的 Window 封装初始化选项：</p>
+<pre class="prettyprint language-ts"><code>interface RPCMessageEventOptions {
+    currentEndpoint: Window;
+    targetEndpoint: Window;
+    targetOrigin: string;
+}
+</code></pre><p>这里的事件接收与发送对象都是 <code>Window</code>，但实际上我们只是依赖了：</p>
+<ul>
+<li>currentEndpoint 上的 <code>message</code> 事件</li>
+<li>targetEndpoint 上的 <code>postMessage</code> 方法与其配置</li>
+</ul>
+<p><strong>换言之，只要浏览器中的其他对象支持 <code>message</code> 事件与 <code>postMessage</code> 方法即可实现同样的封装，即满足接口即可</strong>。</p>
+<pre class="prettyprint language-ts"><code>interface RPCMessageEventOptions {
+    currentEndpoint: {
+        addEventListener&lt;K extends keyof MessagePortEventMap&gt;(
+            type: K,
+            listener: (
+                this: RPCMessageEventOptions[&#x27;currentEndpoint&#x27;],
+                ev: MessagePortEventMap[K]
+            ) =&gt; any,
+            options?: boolean | AddEventListenerOptions
+        ): void;
+    };
+    targetEndpoint: {
+        postMessage(message: any, ...args: any[]): void;
+    };
+}
+</code></pre><h3>浏览器中通信接口</h3>
+<p>以下为目前浏览器主要支持消息通信的对象，其都实现了类似消息事件接口：</p>
+<pre class="prettyprint language-ts"><code>interface MessagePort extends EventTarget {
+    postMessage(message: any, transfer: Transferable[]): void;
+    postMessage(message: any, options?: StructuredSerializeOptions): void;
+    addEventListener&lt;K extends keyof MessagePortEventMap&gt;(
+        type: K,
+        listener: (this: MessagePort, ev: MessagePortEventMap[K]) =&gt; any,
+        options?: boolean | AddEventListenerOptions
+    ): void;
+    addEventListener(
+        type: string,
+        listener: EventListenerOrEventListenerObject,
+        options?: boolean | AddEventListenerOptions
+    ): void;
+    removeEventListener&lt;K extends keyof MessagePortEventMap&gt;(
+        type: K,
+        listener: (this: MessagePort, ev: MessagePortEventMap[K]) =&gt; any,
+        options?: boolean | EventListenerOptions
+    ): void;
+    removeEventListener(
+        type: string,
+        listener: EventListenerOrEventListenerObject,
+        options?: boolean | EventListenerOptions
+    ): void;
+}
+</code></pre><p><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/a63c757e182b4a77b9386fa735310ee9~tplv-k3u1fbpfcp-watermark.image?" alt="image.png"></p>
+<p><img src="https://p6-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/3be12c0bdf9d401a948b4888ce6c907b~tplv-k3u1fbpfcp-watermark.image?" alt="image.png"></p>
+<p><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/43422cea86534ce59d5e264e10af5a16~tplv-k3u1fbpfcp-watermark.image?" alt="image.png"></p>
+<p><img src="https://p1-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/afbfd66a34ab4d1f99f244f596725e5f~tplv-k3u1fbpfcp-watermark.image?" alt="image.png"></p>
+<p>有兴趣的同学可以翻一翻 <code>lib.dom.d.ts</code> 接口定义，有时会比翻文档来的清楚：</p>
+<ul>
+<li><a href="https://github.com/microsoft/TypeScript/blob/main/lib/lib.dom.d.ts#L17278">Window</a></li>
+<li><a href="https://github.com/microsoft/TypeScript/blob/main/lib/lib.dom.d.ts#L17389">Worker</a></li>
+<li><a href="https://github.com/microsoft/TypeScript/blob/main/lib/lib.dom.d.ts#L13951">ServiceWorker</a></li>
+<li><a href="https://github.com/microsoft/TypeScript/blob/main/lib/lib.dom.d.ts#L2457">BroadcastChannel</a></li>
+<li><a href="https://github.com/microsoft/TypeScript/blob/main/lib/lib.dom.d.ts#L10126">MessagePort</a></li>
+</ul>
+<p>综上我们可以整一个终极缝合怪来适配所有接口：</p>
+<pre class="prettyprint language-ts"><code>&#x2F;&#x2F; 消息发送对象的接口定义
+interface AbstractMessageSendEndpoint {
+    &#x2F;&#x2F; BroadcastChannel
+    postMessage(message: any): void;
+    &#x2F;&#x2F; Wroker &amp;&amp; ServiceWorker &amp;&amp; MessagePort
+    postMessage(message: any, transfer: Transferable[]): void;
+    postMessage(message: any, options?: StructuredSerializeOptions): void;
+    &#x2F;&#x2F; window
+    postMessage(message: any, options?: WindowPostMessageOptions): void;
+    postMessage(message: any, targetOrigin: string, transfer?: Transferable[]): void;
+}
+
+&#x2F;&#x2F; 消息接收对象的接口定义
+interface AbstractMessageReceiveEndpoint extends EventTarget, AbstractMessageSendEndpoint {
+    onmessage?: ((this: AbstractMessageReceiveEndpoint, ev: MessageEvent) =&gt; any) | null;
+    onmessageerror?: ((this: AbstractMessageReceiveEndpoint, ev: MessageEvent) =&gt; any) | null;
+    close?: () =&gt; void;
+    start?: () =&gt; void;
+
+    addEventListener&lt;K extends keyof MessagePortEventMap&gt;(
+        type: K,
+        listener: (this: AbstractMessageReceiveEndpoint, ev: MessagePortEventMap[K]) =&gt; any,
+        options?: boolean | AddEventListenerOptions
+    ): void;
+    addEventListener(
+        type: string,
+        listener: EventListenerOrEventListenerObject,
+        options?: boolean | AddEventListenerOptions
+    ): void;
+    removeEventListener&lt;K extends keyof MessagePortEventMap&gt;(
+        type: K,
+        listener: (this: AbstractMessageReceiveEndpoint, ev: MessagePortEventMap[K]) =&gt; any,
+        options?: boolean | EventListenerOptions
+    ): void;
+    removeEventListener(
+        type: string,
+        listener: EventListenerOrEventListenerObject,
+        options?: boolean | EventListenerOptions
+    ): void;
+}
+</code></pre><p>需要注意 postMessage 接口定义，实际使用 WindowPostMessageOptions 接口即可涵盖目前所有的消息通信，其包含了 <code>targetOrigin</code> 与 <code>transfer</code> 配置。</p>
+<pre class="prettyprint language-ts"><code>interface StructuredSerializeOptions {
+    transfer?: Transferable[];
+}
+
+interface WindowPostMessageOptions extends StructuredSerializeOptions {
+    targetOrigin?: string;
+}
+
+interface AbstractMessageSendEndpoint {
+    postMessage(message: any, options?: WindowPostMessageOptions): void;
+}
+</code></pre><p>最终的事件初始化选项接口如下，新增了一个 config 配置项用于给 postMessage 传递配置参数：</p>
+<pre class="prettyprint language-ts"><code>interface RPCMessageEventOptions {
+    currentEndpoint: AbstractMessageReceiveEndpoint;
+    targetEndpoint: AbstractMessageSendEndpoint;
+    config?:
+        | ((data: any, context: AbstractMessageSendEndpoint) =&gt; WindowPostMessageOptions)
+        | WindowPostMessageOptions;
+}
+</code></pre><p>具体封装实现可以戳这里看 <a href="https://github.com/kinglisky/rpc-shooter/blob/master/src/index.ts#L115">RPCMessageEvent 的实现</a>，<strong>面向接口的设计可以很好将同一类问题归一抽象</strong>，即使往后浏览器新增了新的通信机制，只要其还满足这套接口配置，那我们的封装就还是有效的。</p>
+<h2>远程过程调用（RPC）</h2>
+<p>经过上面的封装我们得到一个基于事件驱动的消息通信工具，但这还不够，因为其使用还较为原子化（原始），处理消息回复显得繁琐，举个例子：</p>
+<pre class="prettyprint language-ts"><code>import { RPCMessageEvent } from &#x27;rpc-shooter&#x27;;
+&#x2F;&#x2F; main
+const mainEvent = new RPCMessageEvent({
+    currentEndpoint: window,
+    targetEndpoint: iframe.contentWindow,
+    config: {
+        targetOrigin: &#x27;*&#x27;,
+    },
+});
+mainEvent.on(&#x27;reply:max&#x27;, (data) =&gt; {
+    console.log(&#x27;invoke max result:&#x27;, data);
+});
+mainEvent.emit(&#x27;max&#x27;, 1, 2);
+
+&#x2F;&#x2F; child
+const childEvent = new RPCMessageEvent({
+    currentEndpoint: window,
+    targetEndpoint: window.top,
+});
+childEvent.on(&#x27;max&#x27;, (a, b) =&gt; {
+    const result = Math.max(a, b);
+    childEvent.emit(&#x27;reply:max&#x27;, result);
+});
+</code></pre><p>当 <code>main</code> 中调用 <code>child</code> 的 <code>max</code> 方法时还需要监听一个 <code>child</code> 中的回复（<code>reply:max</code>）事件，<code>child</code> 接受消息调用方法成功后也需要 emit 一个 <code>reply:max</code> 事件。这一来一回并不优雅，眼不看为净，还需要再做一层封装包装事件的触发与响应。</p>
+<h3>promisify</h3>
+<p>异步事件自然使用 Promise 比较合理，封装也比较简单：</p>
+<pre class="prettyprint language-ts"><code>&#x2F;&#x2F; child
+function registerMethod(method: string, handler: RPCHandler) {
+    const synEventName = &#96;syn:${method}&#96;;
+    const ackEventName = &#96;ack:${method}&#96;;
+    const synEventHandler = (data) =&gt; {
+        Promise.resolve(handler(data.params)).then((result) =&gt; {
+            this._event.emit(ackEventName, result);
+        });
+    };
+    this._event.on(synEventName, synEventHandler);
+}
+registerMethod(&#x27;max&#x27;, ([a, b]) =&gt; Math.max(a, b));
+
+&#x2F;&#x2F; main
+function invoke(method: string, params: any): Promise&lt;any&gt; {
+    return new Promise((resolve) =&gt; {
+        const synEventName = &#96;syc:${method}&#96;;
+        const ackEventName = &#96;ack:${method}&#96;;
+        this._event.emit(synEventName, params);
+        this._event.on(ackEventName, (res) =&gt; {
+            resolve(res);
+        });
+    });
+}
+invoke(&#x27;max&#x27;, [1, 2]).then((res) =&gt; {
+    console.log(res);
+});
+</code></pre><p>调用方 emit 一个带有 <code>syc:</code> 前缀的事件，被调用方注册并监听同名事件，消息调用成功后回复一个带 <code>ack:</code> 前缀事件，调用方监听 <code>ack:</code> 事件标识一次消息相应成功，Promise.resolve。</p>
+<p>promisify 简单，但实际使用消息通信会遇到各种各样的问题：</p>
+<ul>
+<li>远程方法调用错误</li>
+<li>调用方法不存在</li>
+<li>连接超时</li>
+<li>数据格式错误（如 worker 中错误传递了无法序列化 dom 对象）</li>
+<li>…</li>
+</ul>
+<p>针对通信过程各种情况我们需要将其描述出来。</p>
+<p>实际上网页消息通信过程与 <a href="https://zh.wikipedia.org/wiki/%E9%81%A0%E7%A8%8B%E9%81%8E%E7%A8%8B%E8%AA%BF%E7%94%A8">RPC</a> 调用十分类似，可类比于调用远程服务的方法。而刚好有个 <a href="http://wiki.geekdream.com/Specification/json-rpc_2.0.html">JSON-RPC</a> 协议规范可以十分简单清晰描述此过程，不妨借来用一用。</p>
+<h3>JSON-RPC</h3>
+<blockquote>
+<p>JSON-RPC 是一个无状态且轻量级的远程过程调用(RPC)协议。 本规范主要定义了一些数据结构及其相关的处理规则。它允许运行在基于 socket,http 等诸多不同消息传输环境的同一进程中。其使用<a href="http://www.json.org/">JSON</a>（<a href="http://www.ietf.org/rfc/rfc4627.txt">RFC 4627</a>）作为数据格式。</p>
+</blockquote>
+<p>相对动则几百页 http 协议规范，JSON-RPC 的规范很简单，只有一页，有兴趣的同学可以研究下 <a href="http://wiki.geekdream.com/Specification/json-rpc_2.0.html">JSON-RPC 2.0 规范</a>。</p>
+<p>这里主要看一下 JSON-RPC 定义请求与响应的数据格式：</p>
+<pre class="prettyprint language-ts"><code>&#x2F;&#x2F; 错误对象
+interface RPCError {
+    code: number;
+    message: string;
+    data: any;
+}
+
+&#x2F;&#x2F; RPC 请求对象
+interface RPCSYNEvent {
+    jsonrpc: &#x27;2.0&#x27;;
+    method: string;
+    params: any;
+    id?: string;
+}
+
+&#x2F;&#x2F; RPC 响应
+interface RPCSACKEvent {
+    jsonrpc: &#x27;2.0&#x27;;
+    result?: any;
+    error?: RPCError;
+    id?: string;
+}
+</code></pre><p>带索引数组参数的 rpc 调用:</p>
+<pre class="prettyprint language-json"><code>--&gt; {&quot;jsonrpc&quot;: &quot;2.0&quot;, &quot;method&quot;: &quot;subtract&quot;, &quot;params&quot;: [42, 23], &quot;id&quot;: 1}
+&lt;-- {&quot;jsonrpc&quot;: &quot;2.0&quot;, &quot;result&quot;: 19, &quot;id&quot;: 1}
+</code></pre><p>通知:</p>
+<pre class="prettyprint language-json"><code>--&gt; {&quot;jsonrpc&quot;: &quot;2.0&quot;, &quot;method&quot;: &quot;update&quot;, &quot;params&quot;: [1,2,3,4,5]}
+--&gt; {&quot;jsonrpc&quot;: &quot;2.0&quot;, &quot;method&quot;: &quot;foobar&quot;}
+</code></pre><p>不包含调用方法的 rpc 调用:</p>
+<pre class="prettyprint language-json"><code>--&gt; {&quot;jsonrpc&quot;: &quot;2.0&quot;, &quot;method&quot;: &quot;foobar&quot;, &quot;id&quot;: &quot;1&quot;}
+&lt;-- {&quot;jsonrpc&quot;: &quot;2.0&quot;, &quot;error&quot;: {&quot;code&quot;: -32601, &quot;message&quot;: &quot;Method not found&quot;}, &quot;id&quot;: &quot;1&quot;}
+</code></pre><p><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/31906a002cab41fcb9d74a99ea424673~tplv-k3u1fbpfcp-watermark.image?" alt="f29d024d03b32c0a94b8460f8bbe25f.jpg"></p>
+<p>规范中最重要的几条规则如下：</p>
+<p><strong>id</strong></p>
+<blockquote>
+<p>已建立客户端的唯一标识 id，值必须包含一个字符串、数值或 NULL 空值。如果不包含该成员则被认定为是一个通知。该值一般不为 NULL<a href="http://wiki.geekdream.com/Specification/json-rpc_2.0.html#id1">[1]</a>，若为数值则不应该包含小数<a href="http://wiki.geekdream.com/Specification/json-rpc_2.0.html#id2">[2]</a>。</p>
+</blockquote>
+<p>每次调用需要有个唯一 id 标识此次调用，因为我们可能会多次调用同一个远程服务，需要需要有个 id 来标识每次调用。如果没有 id 则表示调用方并不关心调用结果（表示此次调用是一次通知）。</p>
+<p><strong>error</strong> 和 <strong>result</strong></p>
+<blockquote>
+<p>响应对象必须包含 result 或 error 成员，但两个成员必须不能同时包含。</p>
+</blockquote>
+<p>调用失败返回 error，result 为空，调用成功返回 result，error 为空，有 error 对象时则表示调用失败。</p>
+<p>JOSN-RPC 协议简单明了描述数据请求与响应，我们只需要按照其要求封装 Promise 调用，成功时 resolve 失败时 reject 即可。</p>
+<h3>封装实现</h3>
+<p>还是老规矩，先看一样接口定义：</p>
+<pre class="prettyprint language-ts"><code>interface RPCHandler {
+    (...args: any[]): any;
+}
+
+interface RPCEvent {
+    emit(event: string, ...args: any[]): void;
+    on(event: string, fn: RPCHandler): void;
+    off(event: string, fn?: RPCHandler): void;
+}
+
+interface RPCInitOptions {
+    event: RPCEvent;
+    methods?: Record&lt;string, RPCHandler&gt;;
+    timeout?: number;
+}
+
+interface RPCInvokeOptions {
+    isNotify: boolean;
+    timeout?: number;
+}
+
+declare class RPC {
+    private _event;
+    private _methods;
+    static uuid(): string;
+    constructor(options: RPCInitOptions);
+    registerMethod(method: string, handler: RPCHandler): void;
+    removeMethod(method: string): void;
+    invoke(method: string, params: any, options?: RPCInvokeOptions): Promise&lt;any&gt;;
+}
+</code></pre><p>具体封装可看 <a href="https://github.com/kinglisky/rpc-shooter/blob/master/src/index.ts#L266">RPC 实现</a>，最终 RPC 工具方式如下：</p>
+<pre class="prettyprint language-ts"><code>&#x2F;&#x2F; main.ts
+import { RPCMessageEvent, RPC } from &#x27;rpc-shooter&#x27;;
+
+(async function () {
+    const iframe = document.querySelector(&#x27;iframe&#x27;)!;
+    const rpc = new RPC({
+        event: new RPCMessageEvent({
+            currentEndpoint: window,
+            targetEndpoint: iframe.contentWindow!,
+            config: { targetOrigin: &#x27;*&#x27; },
+        }),
+        &#x2F;&#x2F; 初始化时注册处理函数
+        methods: {
+            &#x27;Main.max&#x27;: (a: number, b: number) =&gt; Math.max(a, b),
+        },
+    });
+    &#x2F;&#x2F; 动态注册处理函数
+    rpc.registerMethod(&#x27;Main.min&#x27;, (a: number, b: number) =&gt; {
+        return Promise.resolve(Math.min(a, b));
+    });
+
+    &#x2F;&#x2F; 调用 iframe 服务中的注册方法
+    const randomValue = await rpc.invoke(&#x27;Child.random&#x27;, null, { isNotify: false, timeout: 2000 });
+    console.log(&#96;Main invoke Child.random result: ${randomValue}&#96;);
+})();
+</code></pre><pre class="prettyprint language-ts"><code>&#x2F;&#x2F; child.ts
+import { RPCMessageEvent, RPC } from &#x27;rpc-shooter&#x27;;
+(async function () {
+    const rpc = new RPC({
+        event: new RPCMessageEvent({
+            currentEndpoint: window,
+            targetEndpoint: window.top,
+        }),
+    });
+
+    rpc.registerMethod(&#x27;Child.random&#x27;, () =&gt; Math.random());
+
+    const max = await rpc.invoke(&#x27;Main.max&#x27;, [1, 2]);
+    const min = await rpc.invoke(&#x27;Main.min&#x27;, [1, 2]);
+    console.log({ max, min });
+})();
+</code></pre><p>有一点需要注意以下，在 RPC 初始化实际我们只依赖 <code>RPCEvent</code> 接口，浏览器的通信是由 <code>RPCMessageEvent</code> 模块实现的，我们也可将其换成其他的业务实现，如使用 <a href="https://socket.io/">socket.io</a> 来替代 <code>RPCMessageEvent</code> 以达到和服务端通信的目的，又一个面向接口开发的好处。</p>
+<p>至此我们完成从基本消息通信到页面 RPC 服务调用的封装，对实现细节有兴趣的同学可以戳：<a href="https://github.com/kinglisky/rpc-shooter">rpc-shooter</a> 欢迎指教。</p>
+<p>附注：Google 专业解决 worker 调用的工具库 <a href="https://github.com/GoogleChromeLabs/comlink">comlink</a>，有生产需要同学可以试试。</p>
+<h2>其他</h2>
+<p><a href="https://github.com/kinglisky/rpc-shooter">rpc-shooter</a> 的开发过程学到不少东西，也是目前自己写得比较上心的一个小工具，有胆大小伙伴不妨来试试。</p>
+<p>个人感受是：</p>
+<ul>
+<li>TS 真香</li>
+<li>接口优先、接口优先、还是接口优先</li>
+</ul>
+<p><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/5ba70852046c473d90d235f031e326ec~tplv-k3u1fbpfcp-watermark.image?" alt="微信图片_20220310023005.jpg">
+over~</p>
+</div>

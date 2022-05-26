@@ -1,0 +1,26 @@
+<div class="markdown-text"><p>企业的IT选型与企业战略、业务流程、项目成效等密切相关，是企业研发中的重要环节。完整的技术选型就包括了确定需求，可供选择范围内筛选，找到开源项目，安装试用体验。但是确定需求后，安装和筛选过程也很耗时耗力，这就成为了技术选型的主要痛点。如何缩减时间，优化开源项目试用流程，提高技术选型效率，成为了许多开发者经常思考的问题。这篇文章对比传统开源项目的安装和使用TeamCode的Tin工具安装的体验，为开发者在未来的开源体验中，提供更高效便捷的选择，找到适合自己的安装方式。</p>
+<p><strong>传统开源项目的安装体验</strong>
+Tyk是一个开源的API网关项目，组织可以控制网关的访问权限，保护企业和组织的安全性。首先选择用传统方式，用docker-compose来安装它，需要电脑安装好Git和Docker环境。
+<img src="//static.cnodejs.org/Fp2Is6TNu2A3hmuMgZCulutF4a8O" alt="1.png">
+按照提示步骤，将克隆的DOCKER COMPOSE仓库地址复制到终端命令行
+<img src="//static.cnodejs.org/Fgw2xECoI64DKRlzdhEx3ZJvEODG" alt="2.png">
+部署TYK网关和REDIS
+<img src="//static.cnodejs.org/FhLqYxWJI90Z0aaWLMZvnJGYJR73" alt="3.png">
+等待项目拉起
+<img src="//static.cnodejs.org/FiJEis4CRyPa7WTQfi8u6e-za4sG" alt="4.png">
+大约两分钟后，项目安装成功
+<img src="//static.cnodejs.org/FtVHGmLivkEWvnEa6MiqkiwpJBcD" alt="5.png">
+<img src="//static.cnodejs.org/FjNo-5Tb75JpjwFAqvF-zz6HeQcj" alt="6.png"></p>
+<p>对于TYK这个项目，若是本地已经安装好了Git和Docker的环境，操作起来还是比较迅速，总体体验和时间还是可接受的。但是若本地没有所需的环境和开发工具，整体花费时间较长，可能需要几个小时来安装和调试。</p>
+<p><strong>Tin一键克隆体验</strong>
+<a href="https://www.teamcode.com/products/tin">Tin</a>是TeamCode平台自动构建并快速生成可运行的实例，一键POC，自动配置项目运行环境，免去繁琐依赖安装环节，让开源项目能更便捷地被试用，更方便地传播。在Tin上部署了的应用，用户体验到底有多“迅捷”呢？<a href="https://www.teamcode.com/login?redirect=%2Ftin%2Fclone%3FapplicationId%3D268088907964952576">点击一键体验TYK</a> ，打开克隆页面。
+<img src="//static.cnodejs.org/Fg9yjiRSrXPOby1NMK-b0og45OyR" alt="7.png">
+点击克隆，即刻成功，点击立即运行。不需要电脑本地端有开发工具和Docker，可直接在云上生成和自动构建项目所需运行环境。
+<img src="//static.cnodejs.org/Fnr_kOxfRwG9uZ58_e6CZvrxDN0Z" alt="8.png">
+几秒的时间，网关项目就被创建完毕。
+<img src="//static.cnodejs.org/FhX_XE8EqiznUiwB20kn5jvFLEsJ" alt="9.png">
+在概览界面找到URL端口，访问项目界面。
+<img src="//static.cnodejs.org/FirquOs5njH6nLMbjZuMDb7QFOSt" alt="10.png">
+整个流程非常简单易操作，且耗时在分秒之间，可以说是非常的方便快捷了。尤其是一些需要几十分钟、还需要各类中间件才能搭建起来的项目来说，Tin的接入，降低了开源项目的使用门槛，让它们能非常快速地被用户试用。同时对于企业和开发团队来说，Tin能帮助他们快速技术选型，提高研发效能。</p>
+<p>总结来说，目前很多开源项目社区还是基于传统的源代码和文档的方式来进行协作和沟通，TeamCode平台提供的是更高维度的沟通方式，例如大家分享的不仅仅是代码，可以把包括代码运行起来所需的一切软硬件资源、依赖和配置打包在一起进行分享。沟通缺陷的时候也不再是文字描述和贴图片，而是可以把整个缺陷的现场（代码+环境）通过一个链接的方式分享出去，让bug精准被复现，高效Debug，开发者团队可随时随地，与其他成员一起远程协作，高效开发。</p>
+</div>

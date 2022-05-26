@@ -1,0 +1,288 @@
+<div class="markdown-text"><h3>I. 写在前面</h3>
+<p>Egg框架开源都快2个月了，嗯，本以为能看到一些讨论的，结果等了一个月完全没见到大家写点和这个相关的东西，加上官方文档实在是。。。
+回归正题，作为国内不错的互联网公司，而且据说也是国内最早开始在生产中使用Node的大佬，我觉得不管外界如何评价，阿里开源的东西还是值得学习下的，最近读了一些里面的实现代码，有一些思路还是很值得公司自己编写组织强约束的Node框架学习的，所以这里算是抛砖引玉，写个基本的controller、router、service、自定义middleware和第三方的koa 1.x插件如何转换应用到egg中来。
+本文基于的egg版本为v0.2.1。</p>
+<h3>II. Quick Start</h3>
+<p>Egg是一个强约束的Node框架，这也会其和Express/Koa最大的不同，后者对开发者相对宽松，主要体现在目录结构，编写方式等均可以自定义。
+Egg对目录结构等有一系列要求，幸运的是，虽然官方文档几乎是鸭蛋，但是Git上的官方人员还是很贴心的给我们送上了一个自动生成项目目录以及一些简单例子的方式，我们可以来看下：</p>
+<ul>
+<li>执行如下命令来安装egg-init，在*nix系统下有可能需要sudo权限：
+<ul>
+<li>npm install egg-init -g</li>
+</ul>
+</li>
+<li>执行如下命令生成egg项目框架：
+<ul>
+<li>egg-init —type simple eggache</li>
+</ul>
+</li>
+<li>执行如下命令进入生成的项目目录：
+<ul>
+<li>cd eggache</li>
+</ul>
+</li>
+<li>执行如下命令，安装项目依赖：
+<ul>
+<li>npm  install</li>
+</ul>
+</li>
+<li>执行如下命令，启动egg项目：
+<ul>
+<li>node index.js</li>
+</ul>
+</li>
+</ul>
+<p>好了，到这里egg的样例已经运行起来，我们可以在浏览器中访问：</p>
+<pre class="prettyprint"><code>127.0.0.1:7001&#x2F;news
+</code></pre><p>来观察Hacker News的页面是否正常展现出来，如果页面正常展现，则表明安装成功。</p>
+<h3>III. 框架结构概述</h3>
+<p>用任意的IDE打开项目目录，可以看下大致的文件目录结构：</p>
+<ul>
+<li><strong>app</strong>：核心目录，controller文件夹、public静态资源文件夹，middle中间件文件夹，service数据处理组装文件夹、view层展现相关文件夹以及router.js路由文件都在此目录下，这里也是以后大家使用egg开发的主要场所。</li>
+<li><strong>config</strong>：核心目录，配置文件相关，其中config.default.js中存放的是和当前Node环境无关的配置；config.[env].js文件则存放和Node执行环境相关的配置；plugin.js存放的则是各个插件的package名称和是否开启的配置。这里的Node执行环境，后面会说明。</li>
+<li><strong>logs</strong>：日志文件输出的目录。</li>
+<li><strong>index.js</strong>：项目的入口文件。</li>
+</ul>
+<p>这里大致介绍了下Egg框架的组成结构，后面会对两个核心目录app目录和config目录以及入口文件index.js文件的编写方式一一做介绍。</p>
+<h3>IV. index.js入口文件</h3>
+<p>我们从简单的地方开始介绍，首先是Egg框架的入口：index.js，当然文件名随意命名，这里使用的是II节中生成的官方样例。项目启动函数非常简单：</p>
+<pre class="prettyprint"><code>require(&#x27;egg&#x27;).startCluster({
+	baseDir: __dirname,
+	port: 7001, 
+	workers: 1, &#x2F;&#x2F; default to cpu count
+});
+</code></pre><p>可以看到，启动文件中引入egg包后调用其startCluster函数，并且传入参数就可以了。实际上经过源码分析，这里面的可以传入的参数完整的是这样的：</p>
+<pre class="prettyprint"><code>{
+	customEgg: &#x27;&#x27;,
+	baseDir: process.cwd(),
+	port: options.https ? 8443 : 7001,
+	workers: null,
+	plugins: null,
+	https: false,
+ 	key: &#x27;&#x27;,
+	cert: &#x27;&#x27;,
+}
+</code></pre><p>我们来逐个解析下：</p>
+<ul>
+<li><strong>customEgg</strong>：可选，指egg包所在的目录全路径，这个值框架默认会自动寻找填入。</li>
+<li><strong>baseDir</strong>：必选，执行egg框架所在的目录全路径，否则采用Node的启动路径。</li>
+<li><strong>port</strong>：必选，进程的端口号，默认https为8443，http为7001。</li>
+<li><strong>workers</strong>：可选，启动的子进程个数，默认和当前机器的cpu核数一致。</li>
+<li><strong>plugins</strong>：可选，插件的配置，如果填写必须填写插件配置的JSON字符串。</li>
+<li><strong>https</strong>：可选，默认为false。</li>
+<li><strong>key和cert</strong>：如果选择了https为true，则必选，必须填写可用证书路径。</li>
+</ul>
+<h3>V. config目录</h3>
+<h4>一. config.default.js</h4>
+<p>这个文件主要是用来存放项目所需要的和Node执行环境无关的配置，比如你定义的项目中的一些常量，可以写到config.default.js中。这里关于Node执行环境详细的说明可以参看本节的ENV相关说明。
+这个文件编写方式有两种模式，第一种是官方的示例：</p>
+<pre class="prettyprint"><code>module.exports = appInfo=&gt;{
+	return {
+		&#x2F;&#x2F;你需要添加的项目配置，下面是例子
+		NAME:”EGG_ACHE”
+	}
+}
+</code></pre><p>可以发现，这个和我们一般编写的配置文件不一样，它exports出来的是一个匿名函数，并且该函数有一个参数appInfo，那么这个appInfo是什么呢？
+经过查看egg的源代码（此处忍不住吐槽，0文档看起来真是累…），发现appInfo是Egg框架在自动加载配置文件时传入的一个对象，该对象结构如下：</p>
+<pre class="prettyprint"><code>{
+        name: xxx,
+        baseDir: xxx,
+        env: xxx,
+        HOME: xxx,
+        pkg: xxx,
+}
+</code></pre><p>逐个关键字来说明：</p>
+<ul>
+<li><strong>name</strong>：项目的名称，也就是你的项目主目录的package.json中的name属性对应的值</li>
+<li><strong>baseDir</strong>：项目主目录所在的全路径</li>
+<li><strong>env</strong>：项目启动时配置的环境变量，具体参看本节后面的ENV相关说明</li>
+<li><strong>HOME</strong>：项目启动用户的根路径，process.env.HOME的值，是Node自动生成的</li>
+<li><strong>pkg</strong>：项目的package.json文件读取后得到的JSON对象</li>
+</ul>
+<p>好吧，吐槽归吐槽，从这里可以看到设计团队想的比较周到，有了这个我们在写配置文件时可以方便的调用这些传入的参数了。
+第二种就比较简单了，和普通的配置文件一样，直接使用exports或者module.exports将配置变量返回出来就行了。
+Egg框架在配置文件的处理上比较强大，会自动判断是否为函数，如果是函数则会传入appInfo后执行。</p>
+<h4>二. config.${env}.js</h4>
+<p>这个文件则主要是用来存放项目中和环境相关的一些配置，比如在local下的接口A地址
+配置为：<a href="http://a.org">http://a.org</a>，在production下的接口A地址配置为：<a href="http://b.org">http://b.org</a>，那么对于接口的A的地址配置来说，就需要分别写到config.local.js和config.production.js中。
+该文件的配置内容写法和上一小节中的config.default.js写法完全一致，同样提供了两种配置文件的写法，关于Node环境相关更详细的可以看本节后面的ENV相关说明。</p>
+<h4>三. ENV相关配置文件命名</h4>
+<p>EGG中上述的Node环境，即ENV参数，是用来区分开发/测试/线上的不同配置的，经过查看代码，egg提供的三种环境配置的名称分别为：</p>
+<ul>
+<li><strong>local</strong>：本地开发环境</li>
+<li><strong>unittest</strong>：单元测试环境</li>
+<li><strong>production</strong>：线上生产环境</li>
+</ul>
+<p>所以我们在config目录下的环境相关的配置文件可以命名为：config.local.js/config.unittest.js/config.production.js。
+这些和env相关的配置文件，会在启动时和config.default.js，由egg依据当前运行设置的env自动merge成一个全局config。</p>
+<h4>四. ENV的设置</h4>
+<p>经过查看egg的源代码，可以看到egg框架的env可以采用三种不同的方式进行设置：</p>
+<ul>
+<li>项目主目录的config文件夹下新建serverEnv，注意该文件没有.js等后缀！然后将上述的local/unittest/production填写进去即可。</li>
+<li>读取process.env.EGG_SERVER_ENV的值，这种方式需要启动前加上env前缀，例如：EGG_SERVER_ENV=‘local’ node index.js。其实这种是正式部署应用比较推荐的环境变量设置方式。</li>
+<li>兼容+默认的做法，因为好多公司Node开发使用的env变量名称为NODE_ENV，所以egg判断process.env.NODE_ENV的值为test的话，则ENV更新为unittest；如果process.env.NODE_ENV的值为production的话，则ENV更新为default（？这个相当无厘头，我怀疑是代码写错了，看里面的config加载机制，config.defaule.js是一定会加载的，存储的也是和环境无关的配置）；如果都不是，则更新当前的ENV为local。</li>
+</ul>
+<h3>VI. app目录</h3>
+<p>好了，前面的铺垫全部说完了，我们来看下最重要的app目录，以及如何编写app目录下的相关文件。</p>
+<h4>一. app目录结构概览</h4>
+<p>app目录下又按照设计模式分为了数个更细粒度的子目录，如下：</p>
+<ul>
+<li><strong>controller</strong>：存放controller层的处理文件的位置</li>
+<li><strong>extend</strong>：存放继承一些自定义公共方法的位置，这个在本节的下面详细说下</li>
+<li><strong>middleware</strong>：存放自定义中间件文件，所谓的appMiddleware</li>
+<li><strong>public</strong>：存放项目静态资源的位置</li>
+<li><strong>service</strong>：Egg框架抽象出来的一个概念，可以认为是带有逻辑处理的model层</li>
+<li><strong>view</strong>：存放页面模板文件的位置</li>
+<li><strong>router.js</strong>：编写路由的位置</li>
+</ul>
+<p>文件结构大致描述了下，下面我们逐个目录的分析里面的文件的作用以及如何来编写。</p>
+<h4>二. Egg中隐藏的app实例</h4>
+<p>在讲解下面的目录结构时，我们必须首先弄清一个概念，那就是Egg框架中实际上有一个核心的app实例，地位和Koa以及Express中的app一致，但是我们在Egg框架中无法像Koa/Express那样直接获取到这个app（app 实例是可以拿到的, 在根目录写个 app.js module.export = app =&gt; {}，框架支持这样使用app）。
+我们来看下这个核心的app如何生成：</p>
+<pre class="prettyprint"><code>const Application = require(options.customEgg).Application;
+const app = new Application({
+	baseDir: options.baseDir,
+	plugins: options.plugins,
+});
+</code></pre><p>本文不对这个Application类详细展开，我们只需要知道，这个Application最终继承自Koa，同时Egg框架重载了Koa中的createContext函数，熟悉Koa 1.x源码的朋友都知道，这个createContext函数返回的ctx即为所有中间件中的this对象。由于Egg中重载后的ctx其原型指向的是app.context，所以只要在app.context上的所有函数，均可以在所有中间件（包含路由处理函数）中使用this来直接调用。
+为什么要特意说明下这个app呢，因为extend下的所有属性最终都会被框架自动挂载到app以及app.request/app.response/app.context/app.Helper.prototype上去。不理解这一点，就会很难理解中间件路由中的this对象和extend目录下的内容。</p>
+<h4>三. app/controller</h4>
+<p>这个目录下文件的概念和express以及koa的基本一致，就是路由调度的处理函数，如果文件仅仅想导出一个函数，编写方式如下：</p>
+<pre class="prettyprint"><code>module.exports = function *myHelloController() {
+	this.body = &#x27;Hello My First Egg Page!&#x27;;
+};
+</code></pre><p>由于整个Egg是基于koa 1.x开发的，所以这里做过koa 1.x项目的开发的小伙伴就会很熟悉，和koa 1.x的路由处理函数写法完全一致。
+如果controller下的一个js文件想导出多个路由处理函数，编写方式如下：</p>
+<pre class="prettyprint"><code>exports.funcA = funtion * (){}
+exports.funcB = funtion * (){}
+…
+</code></pre><p>controller函数里面的this在上面的二节已经说明了，其行为基本和koa1.x一致。
+最后，Egg框架会自动将你编写的controller函数挂载到app.controller属性下，挂载的格式为：key是app/controller目录下的文件名进行小驼峰转换为，value是导出的内容，以II节中官方示例为例，其app/controller下的home.js和news.js挂在后为：</p>
+<pre class="prettyprint"><code>app.controller = {   
+	home: [Function: homeController],
+		news:{ 
+		list: [Function: newsListController],
+    		detail: [Function: newsDetailController],
+    		user: [Function: userInfoController] 
+		} 
+}
+</code></pre><p>如果我们再命名一个文件叫做my_hello.js，内容就是本小节开头写的路由函数，则得到的挂在后的app.controller为：</p>
+<pre class="prettyprint"><code>app.controller = {   
+	home: [Function: homeController],
+		news:{ 
+		list: [Function: newsListController],
+    		detail: [Function: newsDetailController],
+    		user: [Function: userInfoController] 
+		} ,
+	myHello: [Function: myHelloController]
+}
+</code></pre><p>看到没，my_hello.js这种风格的会自动被转换为小驼峰形式的名称！
+那么到了这里，我们已经明白了如何编写路由文件，以及知道我们所编写的路由文件最后会被挂载到app.controller属性下。</p>
+<h4>四. app/extend</h4>
+<p>对于app/extend目录下的内容，如果理解了本大节的第二小节，就比较容易看懂了。app/extend下存在的对应文件分为5类，分别挂载到app的不同属性下：</p>
+<ul>
+<li><strong>app/extend/application.js</strong>：其导出的对象直接merge到app对象上</li>
+<li><strong>app/extend/request.js</strong>：其导出的对象直接merge到app.request对象上</li>
+<li><strong>app/extend/response.js</strong>：其导出的对象直接merge到app.response对象上</li>
+<li><strong>app/extend/context.js</strong>：其导出的对象直接merge到app.context对象上</li>
+<li><strong>app/extend/helper.js</strong>：其导出的对象直接merge到app.Helper.prototype原型上，作为原型app.Helper这个类的原型方法。</li>
+</ul>
+<p>这里的1，2，3三个基本上普通开发者无需编写，对于第四点来说，context.js的内容由于最后会merge到app.context中，所以我们如果想在自定义中间件/路由处理函数中的提供一些公共方法，可以直接写到context.js中，然后在自定义中间件/路由处理函数中使用this直接调用，举个例子，context.js内容如下：</p>
+<pre class="prettyprint"><code>module.exports = {
+	getAche(){
+    	return &#x27;EGGACHE&#x27;;
+	}
+};
+</code></pre><p>那么，我们在所有的中间件和controller函数中，可以直接调用this.getAche()来获取常量：EGGACHE
+接下来是第五点中的app/extend/helper.js，导出的方法会merge到app.Helper类的原型上去，而且比较有意思的是：app.context.helper强制指向了app.Helper的实例（Egg做了单例模式），所以我们同样可以将公共方法写入helper.js文件中，然后在中间件/controller函数中使用this.helper.xxx的形式调用，举个例子，helper.js的内容如下：</p>
+<pre class="prettyprint"><code>exports.lowercaseFirst = str =&gt; str[0].toLowerCase() + str.substring(1);
+</code></pre><p>我们可以在中间件/controller函数中使用this.helper.lowercaseFirst方法，对字符串第一个字母进行小写处理。
+app/extend/helper.js还有一个和context.js不一样的地方在于，Egg框架默认将helper传入了模板引擎的locals参数中，所以在helper中定义的公共方法，我们在各种模板文件中同样可以直接调用，nunjucks中的调用形式为：</p>
+<pre class="prettyprint"><code>{{ helper.lowercaseFirst() }}
+</code></pre><h4>五. app/middleware</h4>
+<p>middleware的编写需要和config下的配置文件结合起来，才能编写并且使得一个自定义中间件生效。以一个例子说明，在app/middleware下新建time_access.js，内容如下：</p>
+<pre class="prettyprint"><code>module.exports = (options, app)=&gt; {
+	return function * timeAccess(next) {
+    	console.time(options.key);
+    	yield next;
+    	console.timeEnd(options.key);
+	}
+};
+</code></pre><p>然后在config/config.default.js中编写如下：</p>
+<pre class="prettyprint"><code>module.exports = appInfo=&gt;{
+	return {
+		&#x2F;&#x2F;“middleware”是固定的key不可变，值是一个数组，数组中每一个元素都表示开启的中间件名称（将上面的文件面进行小驼峰转换）。
+		middleware: [‘timeAccess’],
+		&#x2F;&#x2F;中间件所需的参数，key同样是上面的文件面进行小驼峰转换后的字符换，value就是中间件执行需要的参数。
+		timeAccess: {key: ‘Cost Time: ’}
+	}
+}
+</code></pre><p>这样启动项目后，该中间件就生效了。config下文件编写可以参看V大节，我们这里主要来看下自定义中间件的写法，和参数的含义。
+可以看到time_access.js导出的是一个匿名函数，该函数的两个参数options和app，其中options对应的就是config.default.js中的timeAccess的值，这里是{key: ‘Cost Time: ’}，app则是本节第二小节中所描述的app实例，并且要使得该中间件生效，必须在config.default.js中的middleware值对应的数组里面有：’timeAccess’。
+看到这里你也许会有疑问，我的文件名字明明是time_access.js，为啥config配置中所有填写都是timeAccess呢，这里和controller一样，Egg框架为了统一变量的风格，所以会自动的对文件名进行小驼峰转换，那么time_access转换为小驼峰就是timeAccess。
+最后这个匿名函数执行后，返回的是一个标准的koa 1.x的中间件，写法用法和koa 1.x的中间件完全一致，这一块不清楚的可以看Koa 1.x的官方文档学习下。</p>
+<h4>六. app/public</h4>
+<p>这个文件夹下存放的是Web服务器所需的静态资源，这一块没什么好说的，随意放，访问使用/public/xxx就行了，xxx为你的静态资源在public目录下的相对路径。比如我们在app/public下新建了一个css文件叫index.css，则我们可以这样访问下载该文件：
+127.0.0.1:7001/public/index.css</p>
+<h4>七. app/service</h4>
+<p>好吧，终于到了service层了，这一块属于Egg设计的一个服务层，具体来说相当于带了业务逻辑的model，数据的获取和数据的组装都可以在service中完成，然后对于controller函数来说可能就只有两个动作了：</p>
+<ul>
+<li>Service调用</li>
+<li>Page页面渲染</li>
+</ul>
+<p>这样整体的逻辑看起来会更清楚一些。我们以一个例子来理解下service文件的编写方式，这个例子做的比较简单，全量获取百度主页的数据，文件名为BaiduService.js：</p>
+<pre class="prettyprint"><code>module.exports = app=&gt;(class BaiduService extends app.Service {
+	constructor(ctx) {
+    	super(ctx);
+    	this.config = this.app.config;
+	}
+	
+	* getBaiduHomePage() {
+    	let data = yield new Promise((resolve, reject)=&gt; {
+        	require(&#x27;request&#x27;).get(&#x27;http:&#x2F;&#x2F;www.baidu.com&#x27;, function (err, res, data) {
+            if (err) return reject(err);
+            	return resolve(data);
+        	})
+    	});
+    	return data;
+	}
+});
+</code></pre><p>可以看到，BaiduService.js导出的依旧是一个匿名函数，该匿名函数的参数app就是本大节中第二小节所描述的app。
+这个匿名函数由Egg框架执行后，返回的则是一个class，这个class继承自app.Service，其实在app.Service中，仅仅是对this.ctx和this.app赋值而已。
+返回的BaiduService类的构造函数没什么好说的，既然是继承了，必须先super()，然后就可以直接使用this.app来获取app对象，以及this.ctx来获取本次请求的context对象（这个context对象就是中间件和路由中的this对象）。
+那么我在这里定义了一个获取百度主页数据的generator成员函数，至此，整个service层样例已经写完了。接下来我们看看如何在controller中调用：</p>
+<pre class="prettyprint"><code>module.exports = function *myHelloController() {
+	let data = yield this.service.baiduService.getBaiduHomePage();
+	this.body = data;
+};
+</code></pre><p>可以看到，Egg框架将BaiduService这个类new了一个实例，挂载到了this.service.baiduService属性上，因此我们可以直接按照上述的方式调用我们编写的数据获取方法，而且这里的BaiduService.js同样被自动转换成小驼峰的baiduService，所以在controller中的调用形式为：</p>
+<pre class="prettyprint"><code>this.service.小驼峰文件名.成员函数名
+</code></pre><p>这里的类名是无关紧要的，调用依旧以service目录下创建类的文件名为绑定的key。
+<strong>这里要多说一句，经过源码阅读，理清了service加载的逻辑后，可以看到阿里的开发组成员在Service层的逻辑设计还是蛮用心的，this.service和this.controller不一样，它是在每一次请求中第一次使用到时才会new出来的；并且刚才在app/service目录下编写的类也一样，仅在每一次请求中第一次使用到该类时才会实例化；而且不管是this.service还是编写的类，一次会话请求的生命周期中都是单例运行的，这样节省了new类的开销，提升了Egg运行的效率。</strong></p>
+<h4>八. app/view</h4>
+<p>这一块没什么好说的了，模板引擎该怎么用就是怎么用的，但是就和本大节中第四小节描述的那样，app/extend/helper.js中的方法会自动merge到模板执行的locals中，因此在nunjucks中可以使用：</p>
+<pre class="prettyprint"><code>{{ helper.xxx }}
+</code></pre><p>在ejs中可以使用：</p>
+<pre class="prettyprint"><code>&lt;% helper.xxx %&gt;
+</code></pre><p>来调用编写到helper.js中的公共方法。</p>
+<h3>九. app/router.js</h3>
+<p>终于到了app目录下的最后一个文件了，顾名思义，router.js是编写路由的文件，编写形式如下：</p>
+<pre class="prettyprint"><code>module.exports = app =&gt; {
+	app.get(&#x27;&#x2F;home&#x27;, app.controller.home);
+	app.get(&#x27;&#x2F;myPage&#x27;, app.controller.myHello);
+	app.redirect(&#x27;&#x2F;&#x27;, &#x27;&#x2F;news&#x27;);
+	app.get(&#x27;&#x2F;news&#x27;, app.controller.news.list);
+	app.get(&#x27;&#x2F;news&#x2F;item&#x2F;:id&#x27;, app.controller.news.detail);
+	app.get(&#x27;&#x2F;news&#x2F;user&#x2F;:id&#x27;, app.controller.news.user);
+};
+</code></pre><p>这里依旧是返回的一个匿名函数，参数为app，其实整个Egg的加载逻辑大同小异，花点时间搞清楚controller/service/middleware/config中的一块，别的模块也很容易读懂。
+那么这里Egg显然做了一些处理，使得基于Koa 1.x的路由编写看起来和express的风格一致。
+由于在本大节第三小节中的controller编写和加载已经阐述过了，我们所编写的路由文件最后会被挂载到app.controller属性下，因此可以直接使用</p>
+<pre class="prettyprint"><code>app.get(‘&#x2F;index’, app.controller.xxx)
+</code></pre><p>的形式来编写路由函数。</p>
+<h3>VII. 结语</h3>
+<p>写这东西，也算是挑战了下自己，本文总共5200多字全部纯手打；
+Egg框架总体来说设计思路还是非常值得借鉴的，在公司内部协作中，使用这样的强约束框架更能统一风格，提升项目阅读和维护性。
+还有就是我现在源码逻辑理的比较清楚集中在master进程fork出来的app子进程，但是对于agent子进程的作用不是很清楚，我大致看了下agent的实现，似乎目前给出的仅仅用到本地开发时由agent监听几个文件目录——只要这些文件目录下的文件发生变更，就由agent来重启app子进程。
+最后的是<strong>parent——master——app——agent</strong>四者间的通信的意义也没有了解的比较清楚，希望社区有阿里的大神看在我写的辛苦的份上来给我解答下~</p>
+</div>

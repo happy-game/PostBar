@@ -1,0 +1,41 @@
+<div class="markdown-text"><p>基于 BOM 的供应链管理不同于一般非生产型的简单进销存管理，其基本原理已在<a href="https://forum.wuyuan.io/plate/qa/topic/6246b39e90bf9a69a556d182">《供应链，一文讲透》</a>中介绍，已做成模板系统供大家免费使用：<a href="https://workbench.wuyuan.io/proj/29120#118">系统模板项目地址</a>。
+本系统主要包含的模块有：基础信息、员工管理、BOM管理、仓库业务管理、库存管理、销售管理、生产管理、采购管理。各个角色基于系统协作的时序图参考下图：</p>
+<h4>【图-1】销售驱动的供应链系统各个角色协作的时序图</h4>
+<p><img src="//static.cnodejs.org/FjwpyY-djxoNwCfJVrAJxH3You_1" alt="1.png"></p>
+<p>下面对系统的关键部分做截图说明：</p>
+<h4>【图-2】BOM 维护</h4>
+<p><img src="//static.cnodejs.org/Fu4tU-_xp5wv5edlYjZy9zNAwJ5b" alt="2.png">
+注意来源类型的选择，这将决定此物料的获取方式：采购、生产。</p>
+<h4>【图-3】BOM 结构维护</h4>
+<p><img src="//static.cnodejs.org/FmuaWlPjaj8G9ReWOmFxXUNRLcAI" alt="3.png">
+在 BOM 结构信息中，维护此物料在 BOM 树中的信息，其中关键数据数量，决定了父物料对此物料的依赖数量；可通过添加子物料，维护当前物料的子物料组成。</p>
+<h4>【图-4】仓库中商品</h4>
+<p><img src="//static.cnodejs.org/Fm2uBRE6obM9CL45sXcQpJALTppF" alt="4.png"></p>
+<h4>【图-5】可查看每个商品的操作记录</h4>
+<p><img src="//static.cnodejs.org/Fg2km1FutU1lMHEmN6BvEkm5WYyf" alt="5.png"></p>
+<h4>【图-6】一张入库单</h4>
+<p><img src="//static.cnodejs.org/FqjgoaMj2KT2j7tEtoDsW6DZbpqV" alt="6.png"></p>
+<h4>【图-7】销售单</h4>
+<p><img src="//static.cnodejs.org/Fjke7q0nlXx33zH0Pu2ANMrTo4LB" alt="7.png"></p>
+<p>每张销售单，对应一张出库单，销售单下达后，根据商品的来源，可下达采购或生产计划，等待采购员或车间管理确认。</p>
+<h4>【图-8】一个生产计划</h4>
+<p><img src="//static.cnodejs.org/Fq6K-dsOO1vf6QWBcLxYOHuWBL_v" alt="8.png">
+生产计划中依赖的子物料，可以根据来源类型，下达采购或生产计划，然后等采购员或车间管理员确认；
+生产计划确认后对应一张物料出库单，当所有发料完成后，才可进行生产等后续操作；
+生产计划完成后对应一张入库单，应将生产完的商品入库，然后做其它操作。</p>
+<h4>【图-9】采购单</h4>
+<p><img src="//static.cnodejs.org/Fo6utxzWDvCuI2Vsq-rm5j6Rzajl" alt="9.png">
+每张采购单都对应一张入库单，入库完成后商品可进行后续操作。</p>
+<p>您可以单独使用 BOM 管理模板、仓库管理模板，他们能在模板库中找到，也可以根据需要进一步扩展本系统：</p>
+<ol>
+<li>扩展仓库系统的盘点、调拨、出借功能。</li>
+<li>扩展供应商采购管理，产生应付账款对接财务系统。</li>
+<li>扩展订单管理，产生应收账款对接财务系统。</li>
+<li>扩展客户价格管理，做到一客一价。</li>
+<li>扩展客户关系管理，维护上下游关系，为客户提供系统功能，做相关私域运营，提供售前及售后服务。</li>
+<li>扩展订单配送管理，对物流、车辆、司机做相关管理。</li>
+<li>扩展质检管理，控制商品良率。</li>
+<li>设置所有商品为采购类型，不做生产，直接作为简单的商贸型进销存系统使用。</li>
+<li>扩展其他一切需要关联的对象及流程管理…</li>
+</ol>
+</div>

@@ -1,0 +1,221 @@
+<div class="markdown-text"><p><img src="https://kalacloud.com/static/2bdadee47f747aa8b35007e256a0b778/ef245/head.jpg" alt="MySQL Workbench 使用教程 - 如何使用 MySQL Workbench 操作数据库"></p>
+<p>本文首发：《<a href="https://kalacloud.com/blog/mysql-workbench-tutorial/">MySQL Workbench 使用中文教程 - 卡拉云</a>》</p>
+<p>MySQL Workbench 是一款专门为 MySQL 设计的可视化数据库管理软件，我们可以在自己的计算机上，使用图形化界面远程管理 MySQL 数据库。</p>
+<p>有关 MySQL 远程管理软件，你可以选择 Windows 下的 <a href="https://kalacloud.com/blog/best-mysql-gui-tools/">HeidiSQL</a>，MacOS 下的 <a href="https://zhihu.com/question/21792734/answer/2236258250">Sequel Ace</a> 或者 MySQL 官方推出的跨平台客户端 <a href="http://www.mysql.com/products/workbench/">MySQL Workbench</a> 。</p>
+<p>本文使用 Mac 版 MySQL Workbench 进行讲解，Mac 版与 windows 版、Linux 版除 UI 界面稍有不同外，整个操作逻辑完全一致，不论你使用何种操作系统及版本，均可跟随本教程学习。</p>
+<p><strong>本教程目录</strong></p>
+<p>一. 如何下载及安装 MySQL Workbench</p>
+<p>二. 如何使用 Workbench 远程连接数据库</p>
+<p>三. 使用 Workbench 操作数据库</p>
+<ol>
+<li>MySQL Workbench 初始化界面</li>
+<li>连接远程 MySQL 数据库</li>
+<li>创建数据库</li>
+<li>在数据库中创建表</li>
+<li>查看表数据</li>
+<li>向 table 表中插入数据</li>
+<li>修改字段属性</li>
+<li>删除数据库中的表</li>
+</ol>
+<p>四. MySQL 数据导入导出</p>
+<ol>
+<li>导入 SQL 数据</li>
+<li>导出 SQL 数据</li>
+</ol>
+<p>五. 配置 MySQL 数据库表属性</p>
+<ol>
+<li>主键约束</li>
+<li>外键约束</li>
+<li>唯一约束：UQ 索引</li>
+<li>非空约束</li>
+<li>默认值约束</li>
+</ol>
+<p>六. 在 Workbench 中执行一条 SQL 查询</p>
+<p>七. 创建触发器及触发器的应用</p>
+<p>八. 用户账号和访问权限</p>
+<ol>
+<li>查看 MySQL 数据库中的账号情况</li>
+<li>创建 MySQL 数据库账号</li>
+<li>删除 MySQL 数据库账号</li>
+</ol>
+<p>九. Workbench 的升级版卡拉云</p>
+<h2>一. 如何下载及安装 MySQL Workbench</h2>
+<p>MySQL Workbench 作为 MySQL 官方出品的数据库操作软件，我们可以前往 <a href="https://downloads.mysql.com/archives/workbench/">MySQL Workbench 官方下载页</a> 免费下载。</p>
+<p><img src="https://kalacloud.com/static/8e1098d20024f99b1025a27357fd27a4/dcec8/0-downloads.jpg" alt="下载MySQL Workbench"></p>
+<p>在这个下载页中，可根据你的实际情况选择适合你的运行平台及版本。</p>
+<p>下载后一路 Next 安装即可。</p>
+<p>扩展阅读：《<a href="https://kalacloud.com/blog/best-mysql-gui-tools/?utm_medium=inside">10 款 MySQL GUI 管理工具横向测评 - 免费和付费到底怎么选?</a>》</p>
+<h2>二. 如何使用 Workbench 远程连接数据库</h2>
+<ul>
+<li>你的服务器需要打开 SSH 登录（如果选择 SSH 登录后再登录 MySQL 需要打开）</li>
+<li>调整服务器防火墙</li>
+<li>配置好 MySQL 远程登录（如果选择直接远程登录 MySQL 服务器时需要打开）</li>
+</ul>
+<p>有关 Workbench 远程登录的教程，请在《<a href="https://kalacloud.com/blog/how-to-connect-to-a-mysql-server-remotely-with-mysql-workbench//?utm_medium=inside">如何使用 Workbench 远程连接到 MySQL 服务器</a>》查看全文。</p>
+<p>有关 MySQL 开启远程登录的教程，请在《<a href="https://kalacloud.com/blog/how-to-allow-remote-access-to-mysql/?utm_medium=inside">如何远程连接 MySQL 数据库，配置阿里云外网连接</a>》查看全文。</p>
+<h2>三. 使用 Workbench 操作数据库</h2>
+<h3>1.MySQL Workbench 初始化界面</h3>
+<p><img src="https://kalacloud.com/static/86f583895bedf3a19a03dc88d6f4e3e0/48958/01-interface.jpg" alt="Workbench 初始化界面"></p>
+<p>Workbench 初始化界面</p>
+<h3>2.连接远程 MySQL 数据库</h3>
+<p><img src="https://kalacloud.com/static/fc5a2ec9afda037d9f8b503f6d1512e6/cd367/02-connect.jpg" alt="连接远程 MySQL 数据库"></p>
+<p>点击配置好的远程登录卡片，登录远程 MySQL 服务器。如果你还没配置好远程端，请参照《<a href="https://kalacloud.com/blog/how-to-connect-to-a-mysql-server-remotely-with-mysql-workbench//?utm_medium=inside">如何使用 Workbench 远程连接到 MySQL 服务器</a>》这篇教程进行配置。</p>
+<p><img src="https://kalacloud.com/static/a3eec04dc6a8e68f3ff32ffe4b05eb7d/06921/03-connect-face.jpg" alt="连接远程 MySQL 数据库"></p>
+<p>登录远程数据库后，红框部分为当前远程 MySQL 数据库中已经创建好的数据库列表。</p>
+<h3>3.创建数据库</h3>
+<p><img src="https://kalacloud.com/static/922f02c387539f147c530355b0fc8b1a/93992/04-create-databases.jpg" alt="创建数据库"></p>
+<p>在 <code>SCHEMAS</code> 列表的空白处，点击鼠标右键，在弹出的菜单中选择「Create Schema…」，进入数据库创建流程页面。</p>
+<p><img src="https://kalacloud.com/static/ed57545a0d8156f65fdb3a31da5b78de/93992/05-database-rename.jpg" alt="填写数据库名称"></p>
+<p>在 Schema Name 里填入新建数据库的数据库名，然后选择 Apply</p>
+<p><img src="https://kalacloud.com/static/7649d46b436e50628cf97c9beb0a426c/6753f/06-database-rename-sql.jpg" alt="生成 SQL 命令脚本"></p>
+<p>MySQL Workbench 会自动帮助我们生成 SQL 命令，创建数据库。</p>
+<p><img src="https://kalacloud.com/static/1db6aee51657de14589554fbf53a0252/3b2a1/07-create-databases-successfully.jpg" alt="创建数据库成功"></p>
+<p>执行命令，创建成功。可以看到 Schemas 列表中多了我们刚刚创建的 <code>kalacloud_demo</code> 数据库</p>
+<h3>4.在<code>kalacloud_demo</code> 数据库中创建表</h3>
+<p><img src="https://kalacloud.com/static/0d3711a82eeab907c682ced7a27dcebf/dfb5e/08-set-as-default.jpg" alt="设置当前数据库为默认数据库"></p>
+<p>右键点击<code>kalacloud_demo</code> ，选择 <code>Set as Default Schema</code> 先把它设置成默认数据库。</p>
+<p><img src="https://kalacloud.com/static/423b89c2ffc612cc032d18e12acf1a1b/0d6e3/09-create-tables.jpg" alt="创建数据库中的表"></p>
+<p>然后选择下箭头，右键点击 <code>Tables</code> 选择 <code>Create Table</code> 进入创建表的流程页。</p>
+<p><img src="https://kalacloud.com/static/b7f6805b49bab932e875b905061cb352/14fc6/10-create-tables-id.jpg" alt="表的创建流程页"></p>
+<p>（1）<code>Name</code>：这里填写表名</p>
+<p>（2）这里创建表中的各列、列属性。</p>
+<p>（3）点击＜click to edit＞可添加一列。</p>
+<p>（4）点击 Apply 执行 SQL 命令。</p>
+<p><img src="https://kalacloud.com/static/20f2be854efb6e308a0edaaa1469c35d/48958/11-create-tables-id-sql.jpg" alt="创建表的 SQL 命令"></p>
+<p>MySQL Workbench 会帮我们生成创建表的 SQL 命令。</p>
+<h3>5.查看表数据</h3>
+<p><img src="https://kalacloud.com/static/c622d0d5b8f466b5af87a0840d6f360a/bbc43/12-select-tables.jpg" alt="查看表数据"></p>
+<p>（1）点击要查看的表名后面的「闪电 icon」标示</p>
+<p>（2）Workben 自动帮我们生成一段查看表的 SQL 命令</p>
+<p>（3）点击黄色闪电标志执行后，可在 Result Grid 看到查询表的表数据</p>
+<h3>6.向 table 表中插入数据</h3>
+<p><img src="https://kalacloud.com/static/b92d4c662a5d4d5fdbd0c55be3dff17b/bbc43/13-1-insert-tables.jpg" alt="向 table 表中插入数据"></p>
+<p>（1）使用 <code>Select</code> 查出表内容后，在表格内直添加需要写入的数据。</p>
+<p>（2）Workbench 会生成一段查看表的代码</p>
+<p>（3）在下方表格中展示表内数据，我们可以根据自己的需求在这里向表内添加数据。</p>
+<p>（4）最后点击应用生成添加数据的代码</p>
+<p><img src="https://kalacloud.com/static/78d4850a53eeb606cc052d18157b1a72/8b3ab/13-2-insert-tables-sql.jpg" alt="向 table 表中插入数据的 SQL 代码"></p>
+<p>如上图所示，我们可以看到 id 为 1 的卡拉云这一行数据已经转化成 SQL 命令，点击应用即可将数据添加到数据库中。</p>
+<h3>7.修改字段属性</h3>
+<p><img src="https://kalacloud.com/static/44788d68f8faa783bc9dd4287717e958/ad3f1/14-alter-tables.jpg" alt="修改字段属性"></p>
+<p>右键点击需要修改的表，选择「Alter Table…」，右侧会显示出表信息，修改需要修改的内容后，Apply 即可应用。</p>
+<h3>8.删除数据库中的表</h3>
+<p><img src="https://kalacloud.com/static/98f91cd08635c62bb71c4fcc4a207e37/ad3f1/15-del-tables.jpg" alt="删除数据表"></p>
+<p>右键选择需要删除的表，然后点击「Drop Table…」即可删除。注意：此操作不可撤回，谨慎选择。</p>
+<p>扩展阅读：《<a href="https://kalacloud.com/blog/mysql-remove-duplicate-records/?utm_medium=inside">如何在 MySQL 中查找和删除重复记录？</a>》</p>
+<h2>四. MySQL 数据导入导出</h2>
+<h3>1.使用 MySQL Workbench 导入 SQL 数据</h3>
+<p><img src="https://kalacloud.com/static/85cc88ef4f3dc684a0c0c3c21d65c4f8/cd851/16-open-sql-script.jpg" alt="使用 MySQL Workbench 导入数据"></p>
+<p>在菜单栏中选择 <code>File</code> → <code>Open SQL Script...</code> 选择要导入的 SQL 文件</p>
+<p><img src="https://kalacloud.com/static/68149eb07a89a2deb2ab8b42f50d12a6/903c8/17-open-sql.jpg" alt="打开 SQL 文件"></p>
+<p>在弹出的对话框中选择需要导入的 SQL 文件。</p>
+<p><img src="https://kalacloud.com/static/3390b9fa2564f0bb544f52e620249bbc/d9e34/18-0-use-database.jpg" alt="选择 SQL 文件"></p>
+<p>这里非常关键，一定要仔细阅读。</p>
+<p>（1）在打开的 SQL 文件的头部，写入需要导入的数据库名，本教程将导入 <code>kalacloud_demo</code> 这个数据库。 所以在文件中写入 <code>USE kalacloud_demo;</code></p>
+<p>（2）点击黄色闪电 icon 执行代码</p>
+<p>（3）将这 4 条数据写入数据库对应的 users 表中</p>
+<p><img src="https://kalacloud.com/static/79c5307d9fd1bec7c1d59e8dd75b4512/25fc1/18-1-use-database-sess.jpg" alt="MySQL 数据导入成功"></p>
+<p>使用 <code>SELECT</code> 查询表，可以看到 4 条数据已经成功导入</p>
+<h3>2.使用 MySQL Workbench 导出 SQL 数据</h3>
+<p><img src="https://kalacloud.com/static/9f1bb55a9f813121873f33ee10d084ba/d9e34/19-Data-Export.jpg" alt="使用 MySQL Workbench 导出数据"></p>
+<p>（1）选择 Administration 标签</p>
+<p>（2）在 MANAGENMENT 中找到 Data Export</p>
+<p>（3）选择需要导出的数据库</p>
+<p>（4）选择需要导出数据库中的表</p>
+<p>（5）选择导出内容</p>
+<p>（6）选择导出 SQL 文件的存储路径</p>
+<p>（7）Start Export 开始导出</p>
+<p>扩展阅读：《<a href="https://kalacloud.com/blog/how-to-import-and-export-databases-excel-csv-in-mysql-or-mariadb-from-terminal/?utm_medium=inside">如何在 MySQL 中导入导出 SQL 数据、Excel、CSV</a>》</p>
+<h2>五. 配置 MySQL 数据库表属性</h2>
+<h3>1.主键约束</h3>
+<p><img src="https://kalacloud.com/static/5157908784800877046bfa8f73225027/bbc43/20-Primary-Key.jpg" alt="主键约束 Primary-Key"></p>
+<p>Primary Key（PK）：主键约束，指定某列的数据非空、唯一、不能重复</p>
+<p>（1）右键点击需要设置的表，选择「Alter Table…」</p>
+<p>（2）<code>PK</code> 为设置主键约束。</p>
+<h3>2.外键约束</h3>
+<p><img src="https://kalacloud.com/static/d5b0279b5173590f79590829dca074d1/50a3f/21-Foreign-Key.jpg" alt="外键约束-Foreign-Key"></p>
+<p>Foreign Key：外键，指定该列记录属于主表中的一条记录，参照另一条数据</p>
+<p>（1）右键点击需要设置的表，选择「Alter Table…」</p>
+<p>（2）选择「Foreign Keys」的标签</p>
+<p>（3）选择要关联的表</p>
+<p>（4）当前表的列，选择要关联的键</p>
+<p>（5）被关联表的列，选择需要关联的键</p>
+<p>（6）Apply 应用，进行关联</p>
+<h3>3.唯一约束：UQ 索引</h3>
+<p><img src="https://kalacloud.com/static/140312065d254937dc5a0c6cffbefdfc/a4151/22-Unique.jpg" alt="唯一约束：UQ 索引"></p>
+<p>Unique：唯一约束，指定某列和几列组合的数据不能重复</p>
+<p>选中的列就是数据表的唯一约束索引，取消选中则取消该列的唯一约束索引。</p>
+<h3>4.非空约束</h3>
+<p><img src="https://kalacloud.com/static/e127a0002213f61403d93a5e54d07d43/3d027/23-Not-Null.jpg" alt="非空约束-Not-Null.jpg"></p>
+<p>Not Null：非空约束，指定某列不能为 NULL 空</p>
+<p>选中 NN 的列为数据表的非空约束，取消选中则取消该列的非空约束。</p>
+<h3>5.默认值约束</h3>
+<p><img src="https://kalacloud.com/static/2f04157cce02cf86f96f80f45e92a2f8/d9e34/24-Default.jpg" alt="默认值约束-Default"></p>
+<p>默认值（Default）的完整名称是 默认值约束（Default Constraint）</p>
+<p>MySQL 默认值约束用来指定某列的默认值。</p>
+<p>红框部分，<code>states</code> 的默认值设定为「1」，即插入一条新的记录时没有为这个字段赋值，那么系统会自动为这个字段赋值为「1」。</p>
+<p>扩展阅读：《<a href="https://kalacloud.com/blog/how-to-reset-auto-increment-in-mysql/?utm_medium=inside">MySQL 重置自增 ID (AUTO_INCREMENT)教程 - 完美保留表数据的终极解决方案</a>》</p>
+<h2>六. 在 Workbench 中执行一条 SQL 查询</h2>
+<p>我们也可以直接在 Workbench 执行一段 SQL 查询，下面这段代码是向<code>kalacloud_demo</code>数据库中<code>kalacloud_table_demo</code>表里插入一行数据。</p>
+<pre class="prettyprint"><code>INSERT INTO &#96;kalacloud_demo&#96;.&#96;kalacloud_table_demo&#96; (&#96;id&#96;, &#96;name&#96;, &#96;phone&#96;, &#96;wechat_id&#96;, &#96;wechat_name&#96;, &#96;states&#96;) 
+VALUES (&#x27;2&#x27;, &#x27;卡拉云 kalacloud&#x27;, &#x27;13777779999&#x27;, &#x27;kalacloud&#x27;, &#x27;卡拉云 kalacloud.com&#x27;, &#x27;2&#x27;);
+</code></pre><p><img src="https://kalacloud.com/static/8cb35a0e61d7534bf344618685aeda46/d9e34/25-query-run.jpg" alt="执行 query"></p>
+<p>直接在 <code>Query</code> 标签中写入 SQL 代码，然后点击「黄色闪电」即可执行代码。</p>
+<p>然后，我们运行 <code>select</code> 查看上一条命令是否已经写入表中。</p>
+<pre class="prettyprint"><code>SELECT * FROM kalacloud_demo.kalacloud_table_demo;
+</code></pre><p><img src="https://kalacloud.com/static/ce0303a62eca314ddb44deda73b10982/d9e34/26-query-check.jpg" alt="query 执行完成"></p>
+<p>我们可以看到，红框部分，ID 2 这一条就是刚刚我们写入的数据。</p>
+<p>扩展阅读：《<a href="https://kalacloud.com/blog/how-to-get-the-sizes-of-the-tables-of-a-mysql-database/?utm_medium=inside">如何查看 MySQL 数据库、表、索引容量大小？找到占用空间最大的表</a>》</p>
+<h2>七. 创建 MySQL 触发器及触发器的应用</h2>
+<p><img src="https://kalacloud.com/static/3c8779a359c9c8ac838bf21942a6b405/ad3f1/27-Triggers.jpg" alt="创建 MySQL 触发器"></p>
+<p>1.鼠标右键点击需要添加触发器的表。</p>
+<p>2.选择 <code>Triggers</code> 标签，进入触发器设置页面</p>
+<p>3.选择需要添加的触发器类型。</p>
+<p>4.添加触发器代码</p>
+<p>MySQL 触发器一共有 6 种类型：</p>
+<ul>
+<li><code>BEFORE INSERT</code> ： 在插入数据前，检测插入数据是否符合业务逻辑，如不符合返回错误信息。</li>
+<li><code>AFTER INSERT</code> ： 在表 A 创建新账户后，将创建成功信息自动写入表 B 中。</li>
+<li><code>BEFORE UPDATE</code> ：在更新数据前，检测更新数据是否符合业务逻辑，如不符合返回错误信息。</li>
+<li><code>AFTER UPDATE</code> ：在更新数据后，将操作行为记录在 log 中</li>
+<li><code>BEFORE DELETE</code> ：在删除数据前，检查是否有关联数据，如有，停止删除操作。</li>
+<li><code>AFTER DELETE</code> ：删除表 A 信息后，自动删除表 B 中与表 A 相关联的信息。</li>
+</ul>
+<p>有关六类触发器的实际使用方法及应用场景的详细教程，可查看《<a href="https://kalacloud.com/blog/how-to-manage-and-use-mysql-database-triggers/?utm_medium=inside">MySQL 触发器 创建 、查看、删除 insert、update、delete 教程 - 卡拉云</a>》文章。此教程以实际应用场景为线索，按照场景细致讲解了全部 6 种触发器的使用方法。</p>
+<h2>八. 用户账号和访问权限</h2>
+<h3>1.查看 MySQL 数据库中的账号情况</h3>
+<p><img src="https://kalacloud.com/static/c58a36b70fdb004dbd9a8d0ba21ddf08/ad3f1/28-0-enter-users.jpg" alt="查看 MySQL 数据库中的账号情况"></p>
+<p>（1）在菜单栏选择 <code>Server</code></p>
+<p>（2）选择 <code>Users and Privileges</code> 进入用户管理页面</p>
+<h3>2.创建 MySQL 数据库账号</h3>
+<p><img src="https://kalacloud.com/static/e4f3b625ed2d03fac3740a6e32b1c6c7/1176d/28-1-Add-Account.jpg" alt="创建 MySQL 数据库账号"></p>
+<p>（1）选择 <code>Add Account</code></p>
+<p>（2）添加账号详细信息</p>
+<p>（3）Apply 应用</p>
+<h3>3.删除 MySQL 数据库账号</h3>
+<p><img src="https://kalacloud.com/static/7ac5ff0fc8c68cc41ef98a701658d6f6/d9e34/28-2-dele.jpg" alt="删除 MySQL 数据库账号"></p>
+<p>（1）选择需要删除的账号</p>
+<p>（2）点击 <code>Delete</code></p>
+<p>（3）点击 <code>Refresh</code> 刷新列表</p>
+<p>最后，Workbench 有一些只有付费软件才独有的功能，比如画 ER 图，比如正逆向工程，数据库本地远程之间同步等，这类进阶功能我单独写了一篇，大家可以看这篇《<a href="https://kalacloud.com/blog/how-to-create-er-diagram-of-a-database-in-mysql-workbench/?utm_medium=inside">如何使用 MySQL Workbench 自动生成 ER 图、同步更新远程数据库 - MySQL Workbench 使用教程</a>》</p>
+<p>扩展阅读：《<a href="https://kalacloud.com/blog/how-to-create-a-new-user-and-grant-permissions-in-mysql/?utm_medium=inside">MySQL 权限管理查询手册 - 创建、授权、取消授权、删除、重命名账号</a>》</p>
+<h2>九. 卡拉云 - 新一代低代码开发工具</h2>
+<p>MySQL Workbench 为我们提供了管理 MySQL 的图形界面管理工具，可以在本地轻松管理远程数据库，但 Workbench 只能做较底层的数据库操作。对于「构建在数据库之上，需要前端定制开发」的需求，并不适用。</p>
+<p>这里推荐一下卡拉云，卡拉云是新一代低代码开发工具，免安装部署，可一键接入包括 MySQL 在内的常见数据库及 API。不仅可以完成 Workbench 所有功能，还可根据自己的工作流，定制开发。无需繁琐的前端开发，只需要简单拖拽，即可快速搭建企业内部工具。数月的开发工作量，使用卡拉云后可缩减至数天。</p>
+<p><img src="https://kalacloud.com/static/18822b2a23183deb7d11dd484a7f65aa/71c1d/97-kalacloud-sql.png" alt="卡拉云可一键接入常见的数据库及 API"></p>
+<p>卡拉云可一键接入常见的数据库及 API</p>
+<p>卡拉云可根据公司工作流需求，轻松搭建数据看板，并且可分享给组内的小伙伴共享数据</p>
+<p><img src="https://kalacloud.com/5400a60956e16d655e0297c5d6e5a8d2/98-kalacloud-gif.gif" alt="仅需拖拽即可生成前端组件"></p>
+<p>下图为使用卡拉云在 5 分钟内搭建的「优惠券发放核销」后台，仅需要简单拖拽即可快速生成前端组件，只要会写 SQL，便可搭建一套趁手的数据库工具。<strong>欢迎使用<a href="https://kalacloud.com/?utm_medium=register">卡拉云</a>。</strong></p>
+<p><img src="https://kalacloud.com/static/34625d3adaea4ed250ff3f05b863e47c/cca35/99-kalacloud-sql-index.png" alt="使用卡拉云5分钟搭建优惠券发放核销系统"></p>
+<h2>总结</h2>
+<p>在本教程中，我们讲解了 MySQL Workbench 操作 MySQL 数据库的基础操作。</p>
+<p>有关 MySQL 教程，可继续拓展学习：</p>
+<ul>
+<li><a href="https://kalacloud.com/blog/difference-between-mysql-datetime-and-timestamp-datatypes/">MySQL 时间戳用什么类型 - MySQL 时间函数详解</a></li>
+<li><a href="https://kalacloud.com/blog/how-to-use-the-mysql-blob-data-type-to-store-images-with-php-or-kalacloud/">MySQL 中如何实现 BLOB 数据类型的存取，BLOB 有哪些应用场景？</a></li>
+<li><a href="https://kalacloud.com/blog/how-to-dump-database-and-ignore-or-specific-some-tables-with-mysqldump-in-mysql/">如何在 MySQL / MariaDB 中跳过多张表导出或指定多张表导出备份</a></li>
+<li><a href="https://kalacloud.com/blog/how-to-save-mysql-mariadb-query-output-to-a-file/">如何将 MySQL / MariaDB 的查询结果保存到文件</a></li>
+<li><a href="https://kalacloud.com/blog/how-to-group-by-find-first-and-last-record-in-mysql/">MySQL 分组查询实战 如何查询每组最第一条、最后一条记录，单多字段查询、分组筛选、最大小值排序</a></li>
+</ul>
+</div>

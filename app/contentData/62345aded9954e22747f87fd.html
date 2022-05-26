@@ -1,0 +1,6 @@
+<div class="markdown-text"><p>最近在做第三方的机器人对话项目，需要提供一个公网的地址作为 WebHook 使用，白嫖 ngrok 好久，但是由于一些原因最近国内越来越不稳定，而且免费版本不能固定域名，一旦重启服务又是一套配置很麻烦，所以试着自己写了这个项目，可以部署到 Heroku 这种支持 node.js 部署的平台，就能再白嫖一个固定的免费的对外域名。</p>
+<p>项目地址：<a href="https://github.com/web-tunnel/lite-http-tunnel">https://github.com/web-tunnel/lite-http-tunnel</a></p>
+<p>可以直接使用 README 上的 Deploy to Heroku 按钮直接部署到 Heroku, 或者自己部署到其他支持 node.js 的服务器上</p>
+<p>代码基于 Express.js 和 <a href="http://Socket.IO">Socket.IO</a>, 很轻量 代码很少，不过也目前也只支持公网 HTTP/HTTPS 的请求转发到本地的 HTTP 服务器</p>
+<p>有兴趣的可以试试，也可以用来把树莓派的本地服务挂到公网上什么的，欢迎 Star~</p>
+</div>

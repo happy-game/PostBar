@@ -1,0 +1,78 @@
+<div class="markdown-text"><p>最近看到一份 <a href="https://web-frameworks-benchmark.netlify.app/result">web 框架性能对比</a>,  结果如下
+<img src="//static.cnodejs.org/FstQG9ZLXBmqhdSeU-ruaCHb-35h" alt="image.png"></p>
+<p>心想这个 nanoexpress 是个啥, 咋从来没听过.
+看了看了他就是套了一层 μWebSockets.js.  那么 μWebSockets.js 又是什么鬼</p>
+<p><a href="https://github.com/uNetworking/uWebSockets.js">μWebSockets.js</a> 是一个 C++ 写的 node 扩展. 一个 Node 的 HTTP /WebSocket 服务器.
+据他官网吹的说 http 方面是 Fastify 的 8.5 倍，WebSocket 至少是 <a href="http://Socket.IO">Socket.IO</a> 的 10 倍. 恐怖如斯.</p>
+<p>简单的使用如下</p>
+<pre class="prettyprint language-js"><code>&#x2F;* Non-SSL is simply App() *&#x2F;
+require(&#x27;uWebSockets.js&#x27;).SSLApp({
+
+  &#x2F;* There are more SSL options, cut for brevity *&#x2F;
+  key_file_name: &#x27;misc&#x2F;key.pem&#x27;,
+  cert_file_name: &#x27;misc&#x2F;cert.pem&#x27;,
+  
+}).ws(&#x27;&#x2F;*&#x27;, {
+
+  &#x2F;* There are many common helper features *&#x2F;
+  idleTimeout: 30,
+  maxBackpressure: 1024,
+  maxPayloadLength: 512,
+  compression: DEDICATED_COMPRESSOR_3KB,
+
+  &#x2F;* For brevity we skip the other events (upgrade, open, ping, pong, close) *&#x2F;
+  message: (ws, message, isBinary) =&gt; {
+    &#x2F;* You can do app.publish(&#x27;sensors&#x2F;home&#x2F;temperature&#x27;, &#x27;22C&#x27;) kind of pub&#x2F;sub as well *&#x2F;
+    
+    &#x2F;* Here we echo the message back, using compression if available *&#x2F;
+    let ok = ws.send(message, isBinary, true);
+  }
+  
+}).get(&#x27;&#x2F;*&#x27;, (res, req) =&gt; {
+
+  &#x2F;* It does Http as well *&#x2F;
+  res.writeStatus(&#x27;200 OK&#x27;).writeHeader(&#x27;IsExample&#x27;, &#x27;Yes&#x27;).end(&#x27;Hello there!&#x27;);
+  
+}).listen(9001, (listenSocket) =&gt; {
+
+  if (listenSocket) {
+    console.log(&#x27;Listening to port 9001&#x27;);
+  }
+  
+});
+</code></pre><p>依赖大小如下.
+<img src="//static.cnodejs.org/FsdZTS7LyJBP7zt8PrpvugjwvVr_" alt="image.png"></p>
+<p>然后这个 <a href="https://github.com/nanoexpress/nanoexpress">nanoexpress</a> 类似 express, 基于 μWebSockets.js 做的封装
+类似的还有一个 <a href="https://github.com/kartikk221/hyper-express#readme">hyper-express</a>. 两个性能看起来并驾齐驱.
+<img src="//static.cnodejs.org/FrMnaEHUOGzdD_umdpPC5q3vUiiX" alt="image.png"></p>
+<p>nanoexpress 基本使用</p>
+<pre class="prettyprint language-js"><code>import nanoexpress from &#x27;nanoexpress&#x27;;
+
+const app = nanoexpress();
+
+app.get(&#x27;&#x2F;&#x27;, (req, res) =&gt; {
+    return res.send({ status: &#x27;ok&#x27; });
+});
+
+app.listen(3000);
+</code></pre><p>hyper-express 基本使用</p>
+<pre class="prettyprint language-js"><code>const HyperExpress = require(&#x27;hyper-express&#x27;);
+const webserver = new HyperExpress.Server();
+
+&#x2F;&#x2F; Create GET route to serve &#x27;Hello World&#x27;
+webserver.get(&#x27;&#x2F;&#x27;, (request, response) =&gt; {
+    response.send(&#x27;Hello World&#x27;);
+})
+
+&#x2F;&#x2F; Activate webserver by calling .listen(port, callback);
+webserver.listen(80)
+.then((socket) =&gt; console.log(&#x27;Webserver started on port 80&#x27;))
+.catch((error) =&gt; console.log(&#x27;Failed to start webserver on port 80&#x27;));
+</code></pre><p>不过这两个周边生态基本为零, 看起来只能写一些 crud .
+<img src="//static.cnodejs.org/FjLb4NaTsnTrgyth_U9hv1Gw9FlJ" alt="image.png"></p>
+<p>后面又搜了搜, 发现这个 uWebSockets 作者有点前科, 到处去 diss, 比如各个 websocket 框架, deno 下面  也不在 npm 发包, 只在 github 上.<br>
+所以这两个框架依赖都是 github url 的形式的.</p>
+<p>nanoexpress  有好几个版本, 旗舰版, 企业版. 前两年还是闭源的状态, 要收费的, 定制一些中间件之类的. 看起来不像真的开源.
+hyper-express  倒是好一点, 没有一些乱七八糟的的.</p>
+<p>有兴趣的伙伴可以看看</p>
+</div>

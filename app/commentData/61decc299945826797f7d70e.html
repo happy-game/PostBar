@@ -1,0 +1,2 @@
+<div class="markdown-text"><p>并不一样，js array 没有 capacity 的概念，不需要手动去扩容，并且 <code>const arr = new Array(100);</code> 也不是 [undefined, undefined, …] 这样的 100 个 <code>undefined</code> 元素，而是 v8  的一个特殊 value <code>hole</code>，类似 [hole, hole, …] 这样的，无法被遍历</p>
+</div>

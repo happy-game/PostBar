@@ -1,0 +1,68 @@
+<div class="markdown-text"><p>随着云计算技术的出现和普及，线上算力越来越强，极大降低了企业的生产成本。同时人们对越来越多的软件公司开始进行数字化创新，探求更加高效的远程开发和工作模式。微软在2019年发布了 VS Code Remote，支持远程开发功能, 开启了远程开发新时代。根据StackOverflow的2019年度调研，VS Code已经在当时成为了开发者首选的开发环境。之后，Coder开源了code-server，让VS Code可以在任何平台上运行并通过浏览器访问，解决了跨设备的环境一致性问题。满足了人们对自由、便捷、高效的工作和协作模式的需求，打造了远程开发的基础架构，不少公司也纷纷推出远程开发工具，例如<a href="https://www.teamcode.com/">TeamCode</a>的<a href="https://www.teamcode.com/docs/en-US/dcs/what-is-dcs">Pylon</a>与<a href="https://www.docker.com">Docker</a>推出的<a href="https://docs.docker.com/desktop/dev-environments/">Development Environments</a>。</p>
+<p>用户价值分析
+项目开发者-配置环境困难症
+开发者开发一个项目的时候，第一步要做的就是配置本地开发环境。
+<img src="//static.cnodejs.org/FhiyPQoUo9swAkLMNWr5RcWt-vtF" alt="1.png">
+通常我们会边阅读项目的文档根据教程配置开发环境，然而恰恰是在这看似最基础的事情上，会出现各类问题困扰开发者：</p>
+<ol>
+<li>安装环境报错导致无法继续；</li>
+<li>要求的环境依赖与本地环境冲突；</li>
+<li>好不容易把项目成功了，但项目启动不了；</li>
+<li>系统不同导致无法安装成功，比如有一部分开发者使用的是Windows操作系统。
+<img src="//static.cnodejs.org/FguEyHzH6VCEt4vhCvMf7ZnQg7Po" alt="2.png">
+以上这些问题都让开发者抓狂。接下来就让我们看看两款工具是如何解决环境部署及安装问题的呢？</li>
+</ol>
+<p>TeamCode
+<img src="//static.cnodejs.org/FufSNjga5vp3GCjDlkBrd_AEu_LO" alt="3.png">
+为了解决以上的开发痛点，TeamCode推出了<a href="https://www.teamcode.com/products/dcs">Pylon</a>，它是一款快速自动构建可扩缩的云端开发环境的产品。
+它的能力</p>
+<ol>
+<li>通过 Git 仓库地址快速搭建开发环境；</li>
+<li>标准化的开发环境；</li>
+<li>支持主流 IDE 和浏览器，支持客户端 IDE 接入，可与 TeamCode Cloud-IDE 无缝连接；</li>
+<li>支持多种语言，已支持 Java、Python、Go、Typescript 等。
+它的用途</li>
+<li>开发环境云端自动化管理，降低人力及研发成本；</li>
+<li>代码及研发数据云端存储，加强研发数据安全性；</li>
+<li>研发过程云端管理，数据透明化，提升管理效率。
+产品结构分析
+产品的主要目标人群为开发者，因此需要重点满足开发者的需求，解决开发流程中的繁琐问题。</li>
+</ol>
+<p>场景一：如何满足开发者安装环境的需求
+Pylon
+支持从Git仓库创建一个开发环境
+<img src="//static.cnodejs.org/Fmk_iNaDp-wp6Qb0Q5VA-uoJ1SFA" alt="4.png">
+自动检测并创建环境
+<img src="//static.cnodejs.org/FkCw9yO6ehr-_9Gz5LUCIVc6Tdho" alt="5.png">
+可以选择VS Code与Cloud IDE连接环境与开发
+<img src="//static.cnodejs.org/FkCw9yO6ehr-_9Gz5LUCIVc6Tdho" alt="5.png">
+开始开发
+<img src="//static.cnodejs.org/FrYMtzaaoHMxA11rxmIZtciHoaGF" alt="7.png"></p>
+<p>Dev Environment
+支持以下方式创建一个开发环境：</p>
+<ol>
+<li>Git仓库地址</li>
+<li>本地文件夹</li>
+<li>Docker镜像地址
+<img src="//static.cnodejs.org/Fn7fcJ0mGEiXPRAa6C-PaFy12Gmb" alt="8.png">
+环境会被自动创建
+<img src="//static.cnodejs.org/FlFqgpS06-OBR-en5YwbH1Diav10" alt="9.png">
+打开VS Code连接环境
+<img src="//static.cnodejs.org/FkNDhl6sczLhkKHXdv2wmpHLYxZU" alt="10.png">
+开始开发
+<img src="//static.cnodejs.org/FuZhDRF3Hps3cWQayb9-E1vX1XM4" alt="11.png"></li>
+</ol>
+<p>场景二：如何满足开发者与业务团队的预览发布需求
+Pylon
+<img src="//static.cnodejs.org/FksUSBnPkmfw_P6Ovli-Bhj4Md8s" alt="12.png">
+可以通过URL直接预览项目改动，无需通过CICD流程。
+<img src="//static.cnodejs.org/Fqzrpa8Rt_zV9wF-Blt8zn48UJRo" alt="13.png"></p>
+<p>Dev Environment
+需要通过Git推送代码并走CICD部署至预览服务器。
+<img src="//static.cnodejs.org/FkV9GUcIH8Qn3hVT58FF-cFEgTcc" alt="14.png"></p>
+<p>对TeamCode Pylon的未来展望与优化建议
+优势：
+我认为Pylon这款产品除了解决安装环境这一痛点之外，还能够成为一个在线的预览测试服务，这能够提升开发团队与业务团队合作时候的效率，让业务团队可以及时预览改动。Docker的Dev Environment则还是走传统的CICD路径，在此场景下较为低效。
+建议：
+建议能够在本地创建一个开发环境，因为如果强制用户使用云开发环境，就代表用户所有的开发基础架构都需要上云，相对于本地开发来说成本较高，这一点Docker的Dev Environment有优势。</p>
+</div>

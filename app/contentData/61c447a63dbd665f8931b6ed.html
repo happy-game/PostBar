@@ -1,0 +1,248 @@
+<div class="markdown-text"><h2>推荐一个Node.js参数校验模块 - minijoi</h2>
+<p><strong>初衷：</strong></p>
+<p>由于在使用 <code>Joi</code> 的时候，校验时每次都要写模式规则 <code>string.trim().required()</code> 等等。由于参数校验是频繁且必须的，写的越来越多，代码既不好看，也不好维护，模式规则也不好记忆，并且 <code>joi throw</code> 的错误还需要单独去处理。所以对日常最常用的校验，封装了<code>joi的API</code>，并且可以在调用的时候同时传入<code>自定义的Error</code>，使用 <code>joi</code> 友好的报错<code>堆栈提示信息</code> 同时 <code>throw</code> 我们自定义的<code>Error</code>， 无须再单独处理 <code>joi 的 Error</code>。所以就有了 <code>miniJoi</code> ，就是<code>简单版的joi</code>。</p>
+<p>欢迎提 <a href="https://github.com/zurmokeeper/miniJoi/issues">Issue</a> 和 <a href="https://github.com/zurmokeeper/miniJoi/pulls">PR</a> , 代码的测试用例在<code>tests</code>目录下，写好测试用例，执行命令为：</p>
+<pre class="prettyprint"><code>pnpm run coverage(推荐)
+npm run coverage
+yarn run coverage
+</code></pre><p>控制台会输出用例情况和代码覆盖率。开发者也可以对 <code>miniJoi</code> 进行二次开发，打造更符合自己应用模块。</p>
+<h1>minijoi</h1>
+<pre class="prettyprint"><code>const miniJoi = require(&#x27;minijoi&#x27;);
+
+miniJoi.requireAndNotEmptyForStr(value , options)
+options : {
+    error : new Error(&quot;This is an Error&quot;)  &#x2F;&#x2F;公有
+    pattern : &#x2F;^1[3456789]\d{9}$&#x2F;    &#x2F;&#x2F; email ID   URL  phone  name
+    mode : &#x27;strict&#x27;     &#x2F;&#x2F;phone
+    version : &#x27;ipv6&#x27;    &#x2F;&#x2F;IP
+    generation : &#x27;first&#x27;  &#x2F;&#x2F;ID
+}
+</code></pre><p><strong>友好的堆栈提示，在Joi的基础上，报错的同时把要校验的参数类型也一起告诉给开发者，开发者可以清楚的看到输入的值和类型， _original 字段的值就是输入的值，如下：</strong></p>
+<pre class="prettyprint"><code>Error [ValidationError]: &quot;value&quot; is not allowed to be empty, But the type of the argument passed in is [String], Please check the value in the &quot;_original&quot; field.
+    at Object.exports.process (D:\data\git\minijoi\node_modules\.pnpm\joi@17.4.2\node_modules\joi\lib\errors.js:184:16)
+    at Object.internals.entry (D:\data\git\minijoi\node_modules\.pnpm\joi@17.4.2\node_modules\joi\lib\validator.js:150:26)
+    at Object.exports.entry (D:\data\git\minijoi\node_modules\.pnpm\joi@17.4.2\node_modules\joi\lib\validator.js:27:30)
+    at internals.Base.validate (D:\data\git\minijoi\node_modules\.pnpm\joi@17.4.2\node_modules\joi\lib\base.js:548:26)
+    at validate (D:\data\git\minijoi\apply.js:12:37)
+    at Object.requireAndNotEmptyForStr (D:\data\git\minijoi\apply.js:39:12)
+    at Object.&lt;anonymous&gt; (D:\data\git\minijoi\test.js:101:7)
+    at Module._compile (internal&#x2F;modules&#x2F;cjs&#x2F;loader.js:1072:14)
+    at Object.Module._extensions..js (internal&#x2F;modules&#x2F;cjs&#x2F;loader.js:1101:10)
+    at Module.load (internal&#x2F;modules&#x2F;cjs&#x2F;loader.js:937:32) {
+  _original: &#x27;&#x27;,
+  details: [
+    {
+      message: &#x27;&quot;value&quot; is not allowed to be empty, But the type of the argument passed in is [String], Please check the value in the &quot;_original&quot; field.&#x27;,
+      path: [],
+      type: &#x27;string.empty&#x27;,
+      context: { label: &#x27;value&#x27;, value: &#x27;&#x27; }
+    }
+  ]
+}
+</code></pre><p><strong>Node.js版本要求：</strong></p>
+<p><code>支持 Node.js V10,V12, V14, V16</code></p>
+<p>API如下：</p>
+<p><strong>开发者可自定义 Error ，调用API时传 error 参数就可以了，miniJoi 会自动抛出开发者自定义 Error，默认输出上面的错误信息。</strong></p>
+<p>字符串必填且非空</p>
+<pre class="prettyprint"><code>miniJoi.requireAndNotEmptyForStr(value)
+miniJoi.requireAndNotEmptyForStr(value , {error : new Error(&quot;This is an Error&quot;)})
+</code></pre><p>字符串必填可以为空</p>
+<pre class="prettyprint"><code>miniJoi.requireAndIsEmptyForStr(value)
+miniJoi.requireAndIsEmptyForStr(value , {error : new Error(&quot;This is an Error&quot;)})
+</code></pre><p>必填字符串枚举</p>
+<pre class="prettyprint"><code>miniJoi.requireAndEnumForStr(value , [&quot;test&quot;])
+miniJoi.requireAndEnumForStr(value , [&quot;test&quot;,&quot;test1&quot;] , {error : new Error(&quot;This is an Error&quot;)})
+</code></pre><p>必填字符串特定长度</p>
+<pre class="prettyprint"><code>miniJoi.length(value , limit)
+miniJoi.length(value , limit , {error : new Error(&quot;This is an Error&quot;)})
+</code></pre><p>必填字符串最大长度</p>
+<pre class="prettyprint"><code>miniJoi.max(value , limit)
+miniJoi.max(value , limit , {error : new Error(&quot;This is an Error&quot;)})
+</code></pre><p>必填字符串最小长度</p>
+<pre class="prettyprint"><code>miniJoi.min(value , limit)
+miniJoi.min(value , limit , {error : new Error(&quot;This is an Error&quot;)})
+</code></pre><p>必填字符串中文姓名</p>
+<pre class="prettyprint"><code>miniJoi.name(value )
+miniJoi.name(value , {error : new Error(&quot;This is an Error&quot;)})
+
+miniJoi.name(value , {pattern : xxxx})
+
+如miniJoi提供的中文姓名校验功能不符合开发者的要求，开发者可自定义传入正则表达式
+
+</code></pre><p>必填字符串且合法邮箱</p>
+<pre class="prettyprint"><code>miniJoi.requireEmail(value )
+miniJoi.requireEmail(value , {error : new Error(&quot;This is an Error&quot;)})
+
+输入pattern字段，则使用pattern
+
+miniJoi.requireEmail(value , {
+        error : new Error(&quot;This is an Error&quot;),
+        pattern : &#x2F;^1[3456789]\d{9}$&#x2F;
+    })
+    
+如miniJoi提供的邮箱校验功能不符合开发者的要求，开发者可自定义传入正则表达式
+    
+</code></pre><p>必填字符串且合法电话号码   mode字段参考  <a href="https://github.com/any86/any-rule/tree/8414a8e1aa78e83001c006cad57e21a7d39fd691#%E6%89%8B%E6%9C%BA%E5%8F%B7mobile-phone%E4%B8%AD%E5%9B%BD%E4%B8%A5%E8%B0%A8-%E6%A0%B9%E6%8D%AE%E5%B7%A5%E4%BF%A1%E9%83%A82019%E5%B9%B4%E6%9C%80%E6%96%B0%E5%85%AC%E5%B8%83%E7%9A%84%E6%89%8B%E6%9C%BA%E5%8F%B7%E6%AE%B5">anyrule</a></p>
+<pre class="prettyprint"><code>miniJoi.requirePhone(value )
+miniJoi.requirePhone(value , {error : new Error(&quot;This is an Error&quot;)})
+
+输入pattern字段，则使用pattern
+mode &#x27;strict&#x27;||&#x27;loose&#x27;
+strict 表示严谨
+loose 表示宽松
+默认为(最宽松), 只要是1开头即可
+
+miniJoi.requirePhone(value , {
+        error : new Error(&quot;This is an Error&quot;),
+        pattern : &#x2F;^1[3456789]\d{9}$&#x2F;
+        mode : &#x27;strict&#x27;
+    })
+    
+如miniJoi提供的电话号码校验功能不符合开发者的要求，开发者可自定义传入正则表达式
+</code></pre><p>必填字符串且合法IP</p>
+<pre class="prettyprint"><code>miniJoi.requireIP(value )
+miniJoi.requireIP(value , {error : new Error(&quot;This is an Error&quot;)})
+
+输入pattern字段，则使用pattern
+version &#x27;ipv4&#x27;||&#x27;ipv6&#x27;
+
+ipv4 表示只校验ipv4
+ipv6 表示只校验ipv6
+默认同时校验ipv4和ipv6
+
+miniJoi.requireIP(value , {
+        error : new Error(&quot;This is an Error&quot;),
+        version : &#x27;ipv6&#x27;
+    })
+    
+如miniJoi提供的IP校验功能不符合开发者的要求，开发者可自定义传入正则表达式
+</code></pre><p>必填字符串且合法Url</p>
+<pre class="prettyprint"><code>miniJoi.requireUrl(value )
+miniJoi.requireUrl(value , {error : new Error(&quot;This is an Error&quot;)})
+
+输入pattern字段，则使用pattern
+
+miniJoi.requireUrl(value , {
+        error : new Error(&quot;This is an Error&quot;),
+        pattern : &#x2F;^1[3456789]\d{9}$&#x2F;
+    })
+
+如miniJoi提供的Url校验功能不符合开发者的要求，开发者可自定义传入正则表达式
+</code></pre><p>必填字符串且合法身份证</p>
+<pre class="prettyprint"><code>miniJoi.requireID(value )
+miniJoi.requireID(value , {error : new Error(&quot;This is an Error&quot;)})
+
+输入pattern字段，则使用pattern
+generation : &quot;first&quot; || &quot;second&quot;
+
+first 表示只校验一代身份证
+second 表示只校验二代身份证
+默认同时校验一代和二代
+
+miniJoi.requireID(value , {
+        error : new Error(&quot;This is an Error&quot;),
+        pattern : &#x2F;^1[3456789]\d{9}$&#x2F;
+        generation : &quot;first&quot;
+    })
+    
+如miniJoi提供的身份证校验功能不符合开发者的要求，开发者可自定义传入正则表达式
+</code></pre><p>必填数字</p>
+<pre class="prettyprint"><code>miniJoi.requireForNum(value)
+miniJoi.requireForNum(value , {error : new Error(&quot;This is an Error&quot;)})
+</code></pre><p>必填整数</p>
+<pre class="prettyprint"><code>miniJoi.requireForInt(value)
+miniJoi.requireForInt(value , {error : new Error(&quot;This is an Error&quot;)})
+</code></pre><p>必填数字枚举</p>
+<pre class="prettyprint"><code>miniJoi.requireAndEnumForNum(value)
+miniJoi.requireAndEnumForNum(value ,[1,2], {error : new Error(&quot;This is an Error&quot;)})
+</code></pre><p>必填数字小数位不大于 limit 位</p>
+<pre class="prettyprint"><code>miniJoi.requireAndPrecision(value)
+miniJoi.requireAndPrecision(value , limit , {error : new Error(&quot;This is an Error&quot;)})
+
+2.2 PASS
+2.22 PASS
+2.222 FAIL
+</code></pre><p>必填数字范围API</p>
+<pre class="prettyprint"><code>miniJoi.requireForRangeNum(value ,op, limit )
+miniJoi.requireForRangeNum(value ,op, limit , {error : new Error(&quot;This is an Error&quot;)})
+
+op的值为 gt(&gt;) || gte(&gt;=) || lt(&lt;) || lte(&lt;=)
+
+比如需要参数 &gt; 0 , 则
+miniJoi.requireForRangeNum(value ,&quot;gt&quot; , 0 )   可代表正数
+
+参数 &gt;= 0
+miniJoi.requireForRangeNum(value ,&quot;gte&quot; , 0 )
+
+参数 &lt;= 0
+miniJoi.requireForRangeNum(value ,&quot;lte&quot; , 0 )
+
+参数 &lt; 0
+miniJoi.requireForRangeNum(value ,&quot;lt&quot; , 0 )  可代表负数
+
+
+必填数字范围API
+miniJoi.requireForRangeNum(value ,op, rangeArr )
+miniJoi.requireForRangeNum(value ,op, rangeArr , {error : new Error(&quot;This is an Error&quot;)})
+
+op的值为 
+left-close-right-close &#96;[0,100]&#96;   简称l-c-r-c
+left-close-right-open &#96;[0,100)&#96;   简称 l-c-r-o
+left-open-right-open &#96;(0,100)&#96;     简称 l-o-r-o
+left-open-right-close &#96;(0,100]&#96;     简称 l-o-r-c
+
+比如需要参数 &gt; 0 and &lt;= 100 , 则
+miniJoi.requireForRangeNum(value ,&quot;left-open-right-close&quot; , [0,100] )
+miniJoi.requireForRangeNum(value ,&quot;l-o-r-c&quot; , [0,100] )
+
+比如需要参数 &gt;= 0 and &lt;= 100 , 则
+miniJoi.requireForRangeNum(value ,&quot;left-close-right-close&quot; , [0,100] )
+miniJoi.requireForRangeNum(value ,&quot;l-c-r-c&quot; , [0,100] )
+
+比如需要参数 &gt; 0 and &lt; 100 , 则
+miniJoi.requireForRangeNum(value ,&quot;left-open-right-open&quot; , [0,100] )
+miniJoi.requireForRangeNum(value ,&quot;l-o-r-o&quot; , [0,100] )
+
+
+比如需要参数 &gt;= 0 and &lt; 100 , 则
+miniJoi.requireForRangeNum(value ,&quot;left-close-right-open&quot; , [0,100] )
+miniJoi.requireForRangeNum(value ,&quot;l-c-r-o&quot; , [0,100] )
+
+</code></pre><p>必填整数范围API</p>
+<pre class="prettyprint"><code>miniJoi.requireForRangeInt(value ,op, limit )
+miniJoi.requireForRangeInt(value ,op, limit , {error : new Error(&quot;This is an Error&quot;)})
+op的值为 gt(&gt;) || gte(&gt;=) || lt(&lt;) || lte(&lt;=)
+
+比如需要参数 &gt; 0 , 则
+miniJoi.requireForRangeInt(value ,&quot;gt&quot; , 0 )   可代表正整数
+
+
+参数 &gt;= 0
+miniJoi.requireForRangeInt(value ,&quot;gte&quot; , 0 )
+
+参数 &lt;= 0
+miniJoi.requireForRangeInt(value ,&quot;lte&quot; , 0 )
+
+参数 &lt; 0
+miniJoi.requireForRangeInt(value ,&quot;lt&quot; , 0 )  可代表负整数
+
+
+必填整数范围API  
+miniJoi.requireForRangeInt(value ,op, rangeArr )
+miniJoi.requireForRangeInt(value ,op, rangeArr , {error : new Error(&quot;This is an Error&quot;)})
+</code></pre><p>必填布尔</p>
+<pre class="prettyprint"><code>miniJoi.requireForBool(value)
+miniJoi.requireForBool(value , {error : new Error(&quot;This is an Error&quot;)})
+</code></pre><p>数组必填且非空</p>
+<pre class="prettyprint"><code>miniJoi.requireAndNotEmptyForArr(value)
+miniJoi.requireAndNotEmptyForArr(value , {error : new Error(&quot;This is an Error&quot;)})
+</code></pre><p>数组必填可以为空</p>
+<pre class="prettyprint"><code>miniJoi.requireAndIsEmptyForArr(value)
+miniJoi.requireAndIsEmptyForArr(value , {error : new Error(&quot;This is an Error&quot;)})
+</code></pre><p>对象必填且非空</p>
+<pre class="prettyprint"><code>miniJoi.requireAndNotEmptyForObj(value)
+miniJoi.requireAndNotEmptyForObj(value , {error : new Error(&quot;This is an Error&quot;)})
+</code></pre><p>对象必填可以为空</p>
+<pre class="prettyprint"><code>miniJoi.requireAndIsEmptyForObj(value)
+miniJoi.requireAndIsEmptyForObj(value , {error : new Error(&quot;This is an Error&quot;)})
+</code></pre></div>

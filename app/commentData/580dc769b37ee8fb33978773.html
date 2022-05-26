@@ -1,0 +1,28 @@
+<div class="markdown-text"><p><a href="/user/hyj1991">@hyj1991</a> 仔细派读了几遍, 写的非常不错~~ 非常赞.  对于文档的事, 非常抱歉.</p>
+<p>关于文中的一些疑问:</p>
+<blockquote>
+<p>parent——master——app——agent</p>
+</blockquote>
+<ul>
+<li>agent 是一个特殊的进程, 专门做脏活累活的.
+<ul>
+<li>如 <a href="https://github.com/eggjs/egg-development">egg-development</a> 里面用它来监控文件修改后重启 worker;</li>
+<li>如 <a href="https://github.com/eggjs/egg-schedule">egg-schedule</a> 里面用来计算时间, 然后通知 worker 执行任务</li>
+<li>如 egg-configserver 这类场景是需要跟后端保持配置同步, 此时就只需要 agent 定时同步, 然后消息给 workers</li>
+</ul>
+</li>
+<li>parent 是给启动脚本用的, 如果只是 <code>npm start</code> 的话用不上</li>
+<li>master 一般不用理</li>
+<li>app 即 worker, 默认启动 cpu 个数</li>
+</ul>
+<p>其他的一些:</p>
+<ul>
+<li>启动建议用 <code>npm run dev</code></li>
+<li>NODE_ENV 那个, 在最新版里面是 production 对应 prod 的. 一般我们都是用 EGG_SERVER_ENV 启动.</li>
+<li>app 实例是可以拿到的, 在根目录写个 app.js <code>module.export = app =&gt; {}</code></li>
+<li>egg 内建不绑定 view 实现, 只内置了约定, 具体的模板引擎需要使用者自行引入, 如 egg-view-nunjucks</li>
+<li><code>require('request')</code> 不需要, 内置了 <a href="https://www.npmjs.com/package/urllib">urllib</a>, 直接调用 <code>this.curl(url, opts)</code> 即可</li>
+<li>egg 还有个 framework 机制, 一般建议团队封装一个适合自己业务场景的框架层(egg + plugin集合 + 自定义逻辑), 来给到上层应用开发者来使用.</li>
+</ul>
+<p>最后~ 有没有兴趣加入 eggjs group?</p>
+</div>

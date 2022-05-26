@@ -1,0 +1,188 @@
+<div class="markdown-text"><p>年后遇到了两个服务的内存溢出问题，经过排查后得到了解决，因为NodeJS内存、cpu性能问题相关的用例比较少，所以事后做了下整理。</p>
+<h1>案例1</h1>
+<p>观察某个服务达到了 NodeJS 的内存上限（1.4G），然后抓取了内存快照，上传到了 easyMonitor 平台进行诊断。
+<img src="//static.cnodejs.org/Fpo-0CDtvM-38-PmELTarAErYInn" alt="image.png">
+通过内存快照分析工具，我们可以清晰地看到内存泄漏的主要原因是存在1273个TCP对象没有被释放。接着我们来看看具体是哪里导致了 TCP 对象的泄漏。
+<img src="//static.cnodejs.org/Fnki3xnnm_OQMRexvswXD5q5IY6C" alt="image.png">
+根据第一个 TCP 对象的地址 <a href="/user/4437">@4437</a> 进行搜索。搜索出来的结果简单点来说：Edge 视图展示了这个对象拥有的数据结构；Retainer 视图展示了这个对象被哪些对象引用。我们排查问题的思路就是一级级向上寻找泄漏的对象被哪些对象引用，直到找到我们眼熟的对象来确定是哪一段代码导致的。
+熟悉 nodeJS 的同学应该知道 TCP 对象是被 NodeJS 的 Socket 持有的。所以，直接看下 Retainer 视图里 Socket<a href="/user/328785">@328785</a> 的结构与引用。
+<img src="//static.cnodejs.org/FvqqcKreMw2L_qD0QQ6QgFUguZDX" alt="image.png">
+在 Retainer 视图里显示  SMTPConnection._socket 指向了我们搜索的socket地址，而 SMTPConnection 很明显是跟邮件相关的连接，我们这里问题范围缩小到了使用的 nodemailer 这个包上。
+<img src="//static.cnodejs.org/Fj-2gz7CfAF8duFbPDNXhuJ3dnEi" alt="image.png">
+接着继续分析 SMTPConnection<a href="/user/328773">@328773</a> 被上下文 Context<a href="/user/328799">@328799</a> 持有，查看 Context<a href="/user/328799">@328799</a>。
+<img src="//static.cnodejs.org/FkZo87OoiHH9VJ6zYDX9iMuBW1y9" alt="image.png">
+从上图中我们能看到，这个上下文对象中包含 connection、sendMessage、socketOptions、returned、connection 这些结构，经过对 nodeMailer 源码的研究，我们能够通过这个上下文对象定位到  smtp-transport.js/SMTPTransport.prototype.send。下图中 this.getSocket 函数的 callback 持有的上下文（蓝框圈起来的部分）对应上图中的 system/Context 结构。 var connection = new SMTPConnection(options);  新建的连接没有被释放。
+<img src="//static.cnodejs.org/FqJyrdAOu1oiW1MNytr7wRqKW2ja" alt="image.png"></p>
+<h1>案例2</h1>
+<p>另外一个服务也出现了明显的内存异常，同样抓取了内存快照。
+<img src="//static.cnodejs.org/FvYl0x12oIpz6G-nVoMS_SMlH-9E" alt="image.png">
+通过工具分析，可以明显看到是因为 TLSSocket 没有释放导致了内存泄漏。查询第一个 TLSSocket 的地址 <a href="/user/4531505">@4531505</a>：
+<img src="//static.cnodejs.org/FkQ_LkiRCVZVNSigpNilCmSMYl1j" alt="image.png">
+发现又指向了 SMTPConnection，由于在排查案例1的时候已经研究过 nodeMailer 包了，所以知道这里的 TLSSocket 是邮箱服务在 connect 的时候创建的 TLSSocket。于是接着查询 SMTPConnection<a href="/user/4531545">@4531545</a>
+<img src="//static.cnodejs.org/FrC6zn12zXbVDbKcy-AuvfjsLcdW" alt="image.png">
+看到返回的535报错，发现原来是业务代码的重试机制导致一直在创建链接，但是链接又无法释放导致了内存升高。</p>
+<h1>为什么连接无法释放？</h1>
+<p>通过看 nodemailer 的代码，可以发现无论是 socket 发送邮件成功后还是 tlsSocket 报错最终都会调用 SMTPConnection.close 函数，并调用 socket.end() / tlsSocket.end()。
+问题出在了我们用的 nodemailer 包版本用的是 2.7.2 版本，后面一直没有升级，支持的 NodeJs 版本也比较低，然而高低版本的 socket.end() 实现逻辑不同。</p>
+<h2>NodeJS<a href="/user/9">@9</a> 之前的版本</h2>
+<p>Node<a href="/user/9">@9</a>（包括9）之前的版本在调用 socket.end 后会同步调用  TCP.close() 直接销毁连接。</p>
+<pre class="prettyprint language-js"><code>Socket.prototype.end = function(data, encoding) {
+ &#x2F;&#x2F; 调用双工流（可写流）的 end 函数会触发 finish 事件。
+  stream.Duplex.prototype.end.call(this, data, encoding);
+  this.writable = false;
+  &#x2F;&#x2F; just in case we&#x27;re waiting for an EOF.
+  if (this.readable &amp;&amp; !this._readableState.endEmitted)
+    this.read(0);
+  else
+    maybeDestroy(this);
+};
+
+function maybeDestroy(socket) {
+  if (!socket.readable &amp;&amp;
+      !socket.writable &amp;&amp;
+      !socket.destroyed &amp;&amp;
+      !socket.connecting &amp;&amp;
+      !socket._writableState.length) {
+    &#x2F;&#x2F; 这里调用的也是可写流的 destroy 函数
+    socket.destroy();
+  }
+}
+
+&#x2F;&#x2F; 可写流 destroy 函数
+function destroy(err, cb) {
+   &#x2F;&#x2F; 省略其余代码
+   &#x2F;&#x2F; destroy 函数会调用 socket._destroy。
+  this._destroy(err || null, (err) =&gt; {
+    if (!cb &amp;&amp; err) {
+      process.nextTick(emitErrorNT, this, err);
+      if (this._writableState) {
+        this._writableState.errorEmitted = true;
+      }
+    } else if (cb) {
+      cb(err);
+    }
+  });
+}
+
+Socket.prototype._destroy = function(exception, cb) {
+  this.connecting = false;
+  this.readable = this.writable = false;
+  if (this._handle) {
+    this[BYTES_READ] = this._handle.bytesRead;
+
+    &#x2F;&#x2F; this._handle = TCP()， 调用 TCP close 函数来关闭连接。
+    this._handle.close(() =&gt; {
+      debug(&#x27;emit close&#x27;);
+      this.emit(&#x27;close&#x27;, isException);
+    });
+    this._handle.onread = noop;
+    this._handle = null;
+    this._sockname = null;
+  }
+
+  if (this._server) {
+    COUNTER_NET_SERVER_CONNECTION_CLOSE(this);
+    debug(&#x27;has server&#x27;);
+    this._server._connections--;
+    if (this._server._emitCloseIfDrained) {
+      this._server._emitCloseIfDrained();
+    }
+  }
+};
+</code></pre><h2>NodeJS<a href="/user/12">@12</a></h2>
+<pre class="prettyprint language-js"><code>&#x2F;&#x2F; socket 实现了Duplex，end 函数直接调用了 writableStream.end
+Socket.prototype.end = function(data, encoding, callback) {
+  stream.Duplex.prototype.end.call(this, data, encoding, callback);
+  DTRACE_NET_STREAM_END(this);
+  return this;
+};
+
+&#x2F;&#x2F; _stream_writable.js
+&#x2F;&#x2F; writableStream.end 最终会调用如下函数
+function finishMaybe(stream, state) {
+  const need = needFinish(state);
+  if (need) {
+    prefinish(stream, state);
+    if (state.pendingcb === 0) {
+      state.finished = true;
+      stream.emit(&#x27;finish&#x27;);
+
+      &#x2F;&#x2F; 这里的 state 存放可读流的状态变量
+      &#x2F;&#x2F; @node10 新增：autoDestroy 标志流是否在调用 end（）后自动调用自身的 destroy，在 v12 版本默认是 false。v14 版本开始默认为 true。
+      &#x2F;&#x2F; 所以当我们调用 socket.end（）的时候，不会立刻销毁自己，仅仅会触发 finish 事件。
+      if (state.autoDestroy) {
+        const rState = stream._readableState;
+        if (!rState || (rState.autoDestroy &amp;&amp; rState.endEmitted)) {
+          stream.destroy();
+        }
+      }
+    }
+  }
+  return need;
+}
+
+&#x2F;&#x2F; 那么 socket 什么时候会被销毁呢？
+&#x2F;&#x2F; socket 构造函数
+function Socket(options) {
+     &#x2F;&#x2F; 忽略
+     &#x2F;&#x2F; 注册了 end 事件，触发的时候这个函数会调用自己的 destroy。
+     this.on(&#x27;end&#x27;, onReadableStreamEnd);
+}
+
+function onReadableStreamEnd() {
+  &#x2F;&#x2F; 省略
+  if (!this.destroyed &amp;&amp; !this.writable &amp;&amp; !this.writableLength)
+    &#x2F;&#x2F; 同样会调用可写流的 destroy 然后调用 socket._destory（）
+    this.destroy();
+}
+
+&#x2F;&#x2F; Socket 的 end 事件是可读流 read（）的时候触发的。
+&#x2F;&#x2F; n 参数指定要读取的特定字节数，如果不传，每次返回内部buffer中的全部数据。
+Readable.prototype.read = function(n){
+  const state = this._readableState;
+
+  &#x2F;&#x2F; 计算可以从缓冲区中读取多少数据。
+  n = howMuchToRead(n, state);
+
+  &#x2F;&#x2F; 本次可以读取的字节数为0
+  &#x2F;&#x2F; 流内部缓冲区buffer中的字节数为0
+  &#x2F;&#x2F; 可读流的 ended 状态为 true
+  if (n === 0 &amp;&amp; state.ended) {
+    if (state.length === 0)
+      &#x2F;&#x2F; 结束自己
+      endReadable(this);
+    return null;
+  }
+}
+
+function endReadable(stream) {
+  const state = stream._readableState;
+  debug(&#x27;endReadable&#x27;, state.endEmitted);
+  if (!state.endEmitted) {
+    state.ended = true;
+    process.nextTick(endReadableNT, state, stream);
+  }
+}
+
+function endReadableNT(state, stream) {
+  debug(&#x27;endReadableNT&#x27;, state.endEmitted, state.length);
+  if (!state.endEmitted &amp;&amp; state.length === 0) {
+    state.endEmitted = true;
+    stream.readable = false;
+    &#x2F;&#x2F; 触发传入 stream（socket）的 end 事件。
+    stream.emit(&#x27;end&#x27;);
+
+    &#x2F;&#x2F;这里和可写流一样也有个 autoDestroy 参数，同样是默认 false。
+    if (state.autoDestroy) {
+      &#x2F;&#x2F; In case of duplex streams we need a way to detect
+      &#x2F;&#x2F; if the writable side is ready for autoDestroy as well
+      const wState = stream._writableState;
+      if (!wState || (wState.autoDestroy &amp;&amp; wState.finished)) {
+        stream.destroy();
+      }
+    }
+  }
+}
+</code></pre><p>由于我们的 nodemailer 版本较老，对应支持的 NodeJS 版本也比较旧，nodemailer 会移除 socket 对 end 事件的监听，导致在 node<a href="/user/12">@12</a> 版本下，无法触发 end 事件，也就无法销毁 connection。
+最后升级了 nodemailer 包，问题解决。</p>
+</div>

@@ -1,0 +1,4 @@
+<div class="markdown-text"><p>难得看到这样的科普文，ABI 不兼容大多数时候是内存布局变了导致的，比如你写的那个例子。
+其实 N-API 也不是万能的，如果不在 引擎 (v8) / 异步 IO 实现(libuv) 之上继续进行中间的原语抽象和对应的实现，它所能保证跨大版本的 ABI 兼容，最后也只是针对少数纯计算场景使用。
+毕竟 <code>uv.h</code>  和 <code>v8.h</code> 这两个如此常用的都不受 nodejs runtime 控制，另外连 <code>node_version.h</code> 这种常用来做 break 宏处理的都没法保持 ABI 稳定，因此现在除非明确只去写纯计算的 addon，否则还是推荐用 nan。</p>
+</div>

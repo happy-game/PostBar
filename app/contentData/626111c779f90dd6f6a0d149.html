@@ -1,0 +1,14 @@
+<div class="markdown-text"><p>npm run dev运行正常，但打包出错。
+在context.tsx中定义了context
+const Context = createContext();
+在_app.tsx中使用Context，并赋值一堆变量
+&lt;Context.Provider  value={{isDark, setIsDark, walletAddress, setWalletAddress}}&gt;
+&lt;Component {…pageProps} /&gt;
+&lt;/Context.Provider&gt;
+在build时，提示createContext缺少变量
+Type error: Expected 1 arguments</p>
+<p>改为
+const Context = createContext(undefined);
+提示Type error: Property ‘inviteConfirm’ does not exist on type ‘undefined’.</p>
+<p>请教各位如何解决？</p>
+</div>

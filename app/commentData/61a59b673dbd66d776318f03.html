@@ -1,0 +1,12 @@
+<div class="markdown-text"><p>理论上当然可以，因为包也是人写的代码
+我找了半天，在官网上或其他地方，没找到“写包”的相关内容
+应该只能按 2 楼说的那样吧
+最底层的只看到 <a href="https://github.com/mongodb/node-mongodb-native">https://github.com/mongodb/node-mongodb-native</a> （1楼说的那个）
+我也是一直用这个，mongoose 对我来说没必要</p>
+<p>体积大约几 M，可以说不小，也可以说不大
+“不大”，是因为，你的 node 装在机器上就占用几十 M，装个 mongo.js 不会特别明显
+express 也差不多这个体量
+“不小”，是因为，你的代码可能只有几 kb，我的很多程序都是 kb 级别的
+当我写了一个阿里云的无服务函数时，上传的代码的 90% 以上都是 mongo.js，这令我不太舒服，但目前只能这样</p>
+<p>如果你也喜欢纯净、简单，可以看下 <a href="https://github.com/ppz-pro/Resh">Resh</a>，这是一个只有 300 行（包括所有依赖）的 web 框架</p>
+</div>

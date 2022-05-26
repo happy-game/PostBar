@@ -1,0 +1,247 @@
+<div class="markdown-text"><p><img src="https://user-images.githubusercontent.com/23253540/147585620-ee5b49e3-c947-4fce-a4c2-560a6578248e.png" alt="image"></p>
+<p>原文链接: <a href="https://github.com/xiaoxiaojx/blog/issues/24">https://github.com/xiaoxiaojx/blog/issues/24</a></p>
+<h2>背景</h2>
+<p>收到告警通知, ⚠️ 容器线程数异常（PID上限为15K，超过15K则无法新建进程）⚠️ 。该服务会定时通过 puppeteer 进行一些页面性能收集的任务，为什么残留了这么多进程没有正常退出？</p>
+<p>进入终端调试后，发现了大量的 chrome defunct processes 🧟‍♀️🧟‍♂️ 僵尸进程。于是尝试在 puppeteer issue <a href="https://github.com/puppeteer/puppeteer/issues/1825">Zombie Process problem. #1825</a> 中找一找答案。</p>
+<p><img src="https://user-images.githubusercontent.com/23253540/147537580-776565a9-208a-4508-8554-95287ebb058a.png" alt="451a52f0f90eeeb19449b8dfa8bb92c20651f5b4"></p>
+<h2>尝试解决</h2>
+<p>按照 puppeteer issue 中的建议，在 browser.close() 后，新增了 ps.kill 去杀死可能会残留的相关进程。</p>
+<pre class="prettyprint language-js"><code>await page.close();
+await browser.close();
+const psLookup = await ps.lookup({ pid: borwserPID });
+
+for (let proc of psLookup) {
+  if (_.has(proc, &#x27;pid&#x27;)) {
+      await ps.kill(proc.pid, &#x27;SIGKILL&#x27;);
+  }
+}
+</code></pre><p>然后又过了几天，又收到了告警通知，即本次并未解决该问题。最后又通过运行 puppeteer 时加上 --single-process 参数和定时调用 kill -9 [pid] 去杀死僵尸进程等方法都以失败告终 ❌ 。</p>
+<pre class="prettyprint language-js"><code>const chromeFlags = [
+    &#x27;--headless&#x27;,
+    &#x27;--no-sandbox&#x27;,
+    &quot;--disable-gpu&quot;,
+    &quot;--single-process&quot;,
+    &quot;--no-zygote&quot;
+]
+</code></pre><h2>僵尸进程</h2>
+<p>正当大家困惑的时候，同学 a 发来了一篇文章 <a href="https://mp.weixin.qq.com/s/85ZigYHVBtu6LDTtqpesVw">一次 Docker 容器内大量僵尸进程排查分析</a>，文章中进行了详细的科普，此时才真正认识了僵尸进程。</p>
+<p>到这里给我的体会是，如果遇见了一筹莫展的问题，不妨先仔细了解一下该问题的<strong><em>定义与介绍</em></strong>。它的基础概念是什么？造成的本质原因是什么？<strong><em>了解完前因后果后或许能够事半功倍</em></strong>。</p>
+<blockquote>
+<p>僵尸进程 - 维基百科: 在类UNIX系统中，僵尸进程是指完成执行（通过exit系统调用，或运行时发生致命错误或收到终止信号所致），但在操作系统的进程表中仍然存在其进程控制块，处于&quot;终止状态&quot;的进程。这发生于子进程需要保留表项以允许其父进程读取子进程的退出状态：一旦退出态通过wait系统调用读取，僵尸进程条目就从进程表中删除，称之为&quot;回收&quot;（reaped）。正常情况下，进程直接被其父进程wait并由系统回收。进程长时间保持僵尸状态一般是错误的并导致资源泄漏。</p>
+</blockquote>
+<p>通俗的来讲，就像下面的程序一样。当子进程调用 exit 函数退出了，但是父进程没有给它收尸，于是它变成了杀不死的🧟‍♀️🧟‍♂️ ，因为它早就已经死了，现在只是在进程列表中占了一个坑位而已。</p>
+<p>当该僵尸进程的父进程退出后，它就会被托管到 PID 为 1 的进程上面，通常 PID 为 1 的进程会扮演收尸的角色。
+但是当 Node.js 为 PID 1 的进程时，不会进行收尸，从而导致了大量的僵尸进程的问题。</p>
+<pre class="prettyprint language-c"><code>#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;unistd.h&gt;
+
+int main() {
+
+  printf(&quot;pid %d\n&quot;, getpid());
+  int child_pid = fork();
+  if (child_pid == 0) {
+    printf(&quot;-----in child process:  %d\n&quot;, getpid());
+    exit(0);
+  } else {
+    sleep(1000000);
+  }
+  return 0;
+}
+</code></pre><h2>解决办法</h2>
+<p>当 Docker 中第一个运行的程序为 node xxx.js 时 Node 就成为了 PID 为 1 的进程，所以说问题的解决办法可以是让有能力收尸的进程为第一个运行的程序。</p>
+<p>在 <a href="https://github.com/nodejs/docker-node/blob/main/docs/BestPractices.md">Docker and Node.js Best Practices</a> 中官方也给出了解决方案</p>
+<ol>
+<li>通过 docker 加上 --init 参数使得有一个 init 进程为 PID 为 1</li>
+<li>通过 Tini 作为容器去运行 Node 程序</li>
+</ol>
+<blockquote>
+<p>Node.js was not designed to run as PID 1 which leads to unexpected behaviour when running inside of Docker. For example, a Node.js process running as PID 1 will not respond to SIGINT (CTRL-C) and similar signals. As of Docker 1.13, you can use the --init flag to wrap your Node.js process with a lightweight init system that properly handles running as PID 1.</p>
+</blockquote>
+<pre class="prettyprint language-bash"><code>docker run -it --init node
+</code></pre><blockquote>
+<p>You can also include Tini directly in your Dockerfile, ensuring your process is always started with an init wrapper.</p>
+</blockquote>
+<h2>Tini</h2>
+<p>现在让我们通过 <a href="https://github.com/krallin/tini">Tini</a> 来学习了一下收尸技术，可通过下面的方式让 Tini 去代理运行 Node 程序，使得 Node 成为 Tini 的子进程。</p>
+<pre class="prettyprint language-bash"><code># Add Tini
+ENV TINI_VERSION v0.19.0
+ADD https:&#x2F;&#x2F;github.com&#x2F;krallin&#x2F;tini&#x2F;releases&#x2F;download&#x2F;${TINI_VERSION}&#x2F;tini &#x2F;tini
+RUN chmod +x &#x2F;tini
+ENTRYPOINT [&quot;&#x2F;tini&quot;, &quot;--&quot;]
+
+# Run your program under Tini
+CMD [&quot;&#x2F;your&#x2F;program&quot;, &quot;-and&quot;, &quot;-its&quot;, &quot;arguments&quot;]
+# or docker run your-image &#x2F;your&#x2F;program ...
+</code></pre><p>通过仔细阅读 Tini 的代码，我判断核心的收尸技术就是这个 <strong><em>waitpid 函数</em></strong> 了，其实在僵尸进程的定义中就有了如何收尸，所以先了解基础概念是非常重要的。</p>
+<pre class="prettyprint language-c"><code>int reap_zombies(const pid_t child_pid, int* const child_exitcode_ptr) {
+	pid_t current_pid;
+	int current_status;
+
+	while (1) {
+		current_pid = waitpid(-1, &amp;current_status, WNOHANG);
+
+		switch (current_pid) {
+
+			case -1:
+				if (errno == ECHILD) {
+					PRINT_TRACE(&quot;No child to wait&quot;);
+					break;
+				}
+				PRINT_FATAL(&quot;Error while waiting for pids: &#x27;%s&#x27;&quot;, strerror(errno));
+				return 1;
+
+			case 0:
+				PRINT_TRACE(&quot;No child to reap&quot;);
+				break;
+
+			default:
+				&#x2F;* A child was reaped. Check whether it&#x27;s the main one. If it is, then
+				 * set the exit_code, which will cause us to exit once we&#x27;ve reaped everyone else.
+				 *&#x2F;
+				PRINT_DEBUG(&quot;Reaped child with pid: &#x27;%i&#x27;&quot;, current_pid);
+				if (current_pid == child_pid) {
+					&#x2F;&#x2F; ...
+				} else if (warn_on_reap &gt; 0) {
+					PRINT_WARNING(&quot;Reaped zombie process with pid=%i&quot;, current_pid);
+				}
+
+				&#x2F;&#x2F; Check if other childs have been reaped.
+				continue;
+		}
+
+		&#x2F;* If we make it here, that&#x27;s because we did not continue in the switch case. *&#x2F;
+		break;
+	}
+
+	return 0;
+}
+</code></pre><p>当然 Tini 作为父进程还有其他的优点，比如</p>
+<ol>
+<li>会把接收到的信号转发给其代理运行的子进程，代码实现可见 wait_and_forward_signal 函数</li>
+<li>代理运行的子进程异常退出后，它也会自动退出，代码实现可见 reap_zombies 函数</li>
+</ol>
+<h2>复现与定案</h2>
+<p>当我们学到核心的收尸技术后，就可以来揭发完整的案发现场了 ~</p>
+<p><img src="https://user-images.githubusercontent.com/23253540/147583717-1f7591fa-e1fd-4a22-bf36-16792de6df31.png" alt="image"></p>
+<h3>1. Docker 运行 node xxx.js</h3>
+<pre class="prettyprint language-bash"><code>➜  ~ docker run -t -i -v &#x2F;test&#x2F;tini:&#x2F;test 97f7595bf6c4 node &#x2F;test&#x2F;main.js
+</code></pre><p>Tini 是一个 C 程序，这里先把 Tini 核心实现的代码复制过来，接着用 Node.js C++ 插件的方式来调用 C 这部分的代码</p>
+<p>我们的 main.js 程序对外暴露了两个接口，来完成本次实验</p>
+<ul>
+<li>/make_zombie: 调用 make_zombie 函数产生一个僵尸进程</li>
+<li>/kill_zombie: 调用 kill_zombie 函数收掉一个僵尸进程</li>
+</ul>
+<pre class="prettyprint language-js"><code>&#x2F;&#x2F; &#x2F;test&#x2F;mian.js
+
+const http = require(&quot;http&quot;);
+const { exec } = require(&quot;child_process&quot;);
+const tini = require(&quot;.&#x2F;build&#x2F;Release&#x2F;addon.node&quot;);
+
+const server = http.createServer((req, res) =&gt; {
+  if (req.url === &quot;&#x2F;make_zombie&quot;) {
+    console.log(&quot;make_zombie &gt;&gt;&gt;&quot;);
+    exec(&quot;node &#x2F;test&#x2F;make_zombie.js&quot;, () =&gt; {});
+    res.end(&quot;hello&quot;);
+  } else if (req.url === &quot;&#x2F;kill_zombie&quot;) {
+    console.log(&quot;kill_zombie &gt;&gt;&gt;&quot;);
+    console.log(tini.kill_zombie());
+    res.end(&quot;hello&quot;);
+  }
+});
+
+server.listen(3000);
+</code></pre><h3>2. Node 程序的 PID 会是 1</h3>
+<p>✅ 可见 Node 成为了 PID 为 1 的进程</p>
+<pre class="prettyprint language-bash"><code>➜  ~ docker exec -it 83a67a46ec13 &#x2F;bin&#x2F;bash
+[root@83a67a46ec13 &#x2F;]# ps -ef
+UID        PID  PPID  C STIME TTY          TIME CMD
+root         1     0  0 16:53 pts&#x2F;0    00:00:00 node &#x2F;test&#x2F;main.js
+root        14     0  1 16:53 pts&#x2F;1    00:00:00 &#x2F;bin&#x2F;bash
+root        28    14  0 16:53 pts&#x2F;1    00:00:00 ps -ef
+[root@83a67a46ec13 &#x2F;]#
+</code></pre><h3>3. 制造一个僵尸</h3>
+<p>✅ 子进程调用 exit 退出，父进程不收尸，使其顺利成为一具僵尸</p>
+<pre class="prettyprint language-bash"><code>[root@83a67a46ec13 &#x2F;]# curl localhost:3000&#x2F;make_zombie
+hello[root@83a67a46ec13 &#x2F;]# ps -ef
+UID        PID  PPID  C STIME TTY          TIME CMD
+root         1     0  0 16:53 pts&#x2F;0    00:00:00 node &#x2F;test&#x2F;main.js
+root        14     0  0 16:53 pts&#x2F;1    00:00:00 &#x2F;bin&#x2F;bash
+root        31     1  0 16:55 pts&#x2F;0    00:00:00 node &#x2F;test&#x2F;make_zom
+root        38    31  0 16:55 pts&#x2F;0    00:00:00 [node] &lt;defunct&gt;
+root        39    14  0 16:55 pts&#x2F;1    00:00:00 ps -ef
+[root@83a67a46ec13 &#x2F;]#
+</code></pre><p>产生僵尸的代码为</p>
+<pre class="prettyprint language-c"><code>napi_value make_zombie(napi_env env, napi_callback_info info)
+{
+    printf(&quot;pid %d\n&quot;, getpid());
+    int child_pid = fork();
+    if (child_pid == 0)
+    {
+        printf(&quot;-----in child process:  %d\n&quot;, getpid());
+        exit(0);
+    }
+    else
+    {
+        sleep(1000000);
+    }
+    return NULL;
+}
+</code></pre><p>✅ 杀死僵尸进程的父进程，它就被 PID 为 1 的进程托管</p>
+<pre class="prettyprint language-bash"><code>[root@83a67a46ec13 &#x2F;]# kill -9 31
+[root@83a67a46ec13 &#x2F;]# ps -ef
+UID        PID  PPID  C STIME TTY          TIME CMD
+root         1     0  0 16:57 pts&#x2F;0    00:00:00 node &#x2F;test&#x2F;main.js
+root        14     0  0 16:57 pts&#x2F;1    00:00:00 &#x2F;bin&#x2F;bash
+root        38     1  0 16:59 pts&#x2F;0    00:00:00 [node] &lt;defunct&gt;
+root        40    14  0 17:07 pts&#x2F;1    00:00:00 ps -ef
+[root@83a67a46ec13 &#x2F;]#
+</code></pre><h3>4. 收尸</h3>
+<p>✅  kill -9 杀不死僵尸进程, 符合预期</p>
+<pre class="prettyprint language-bash"><code>[root@83a67a46ec13 &#x2F;]# kill -9 38
+[root@83a67a46ec13 &#x2F;]# ps -ef
+UID        PID  PPID  C STIME TTY          TIME CMD
+root         1     0  0 16:57 pts&#x2F;0    00:00:00 node &#x2F;test&#x2F;main.js
+root        14     0  0 16:57 pts&#x2F;1    00:00:00 &#x2F;bin&#x2F;bash
+root        38     1  0 16:59 pts&#x2F;0    00:00:00 [node] &lt;defunct&gt;
+root        41    14  0 17:09 pts&#x2F;1    00:00:00 ps -ef
+</code></pre><p>✅ 使用 waitpid 函数去收尸，僵尸进程消失</p>
+<pre class="prettyprint language-bash"><code>[root@83a67a46ec13 &#x2F;]# curl localhost:3000&#x2F;kill_zombie
+hello[root@83a67a46ec13ps -ef
+UID        PID  PPID  C STIME TTY          TIME CMD
+root         1     0  0 16:57 pts&#x2F;0    00:00:00 node &#x2F;test&#x2F;main.js
+root        14     0  0 16:57 pts&#x2F;1    00:00:00 &#x2F;bin&#x2F;bash
+root        44    14  0 17:10 pts&#x2F;1    00:00:00 ps -ef
+</code></pre><p>真正收尸的代码为下面，并且通过 Node-api 把本次收尸进程的 id 和 status 返回给了 js 调用方。</p>
+<pre class="prettyprint language-c"><code>napi_value kill_zombie(napi_env env, napi_callback_info info)
+{
+    int current_pid;
+    int current_status;
+    napi_status status;
+
+    current_pid = waitpid(-1, &amp;current_status, WNOHANG);
+    napi_value n_pid;
+    napi_value n_status;
+    status = napi_create_int32(env, current_pid, &amp;n_pid);
+    assert(status == napi_ok);
+
+    status = napi_create_int32(env, current_status, &amp;n_status);
+    assert(status == napi_ok);
+
+    napi_value obj;
+    status = napi_create_object(env, &amp;obj);
+    assert(status == napi_ok);
+
+    status = napi_set_named_property(env, obj, &quot;pid&quot;, n_pid);
+    assert(status == napi_ok);
+
+    status = napi_set_named_property(env, obj, &quot;status&quot;, n_status);
+    assert(status == napi_ok);
+
+    return obj;
+}
+</code></pre><p>可见通过我们逐步的复盘，一切也都验证了我们最初的猜想。</p>
+<h2>小结</h2>
+<p>其实僵尸进程的产生也是 puppeteer 程序的一个 bug, Node.js 不去处理也是情理之中，因为很难判断用户真正的行为，况且还要写一堆副作用的代码。</p>
+<p>最后我们通过 docker --init 使用一个 init 进程去解决，这样进程间互相解藕，各司其职显得优雅一点。这也算践行了sidecar 模式吧 ~</p>
+</div>

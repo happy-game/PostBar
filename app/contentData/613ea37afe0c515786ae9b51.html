@@ -1,0 +1,128 @@
+<div class="markdown-text"><h2>Beehive</h2>
+<h2>前言</h2>
+<p>Beehive 是一个项目管理系统。参考于Teambetion、PearProject，实现部分功能。</p>
+<p>这是一个Vue+Node.js的js全栈项目。基于RBAC模型做权限控制，动态配置菜单，前端实现页面元素级别的权限控制。通过WebSocket实现站内信功能，任务看板中，实现更新同步推送。一旦其他项目成员有对我们当前查看的项目任务做任何的操作，页面都将立即同步更新，并向此任务的所有参与者（除了操作者）发送消息通知。注册和找回密码需要通过邮箱验证码验证，可以通过github授权登陆（不是很稳定）。</p>
+<p>Node.js框架选用的是Egg.js，配合sequelize，自己写了一个小工具。可以通过填写表字段的配置，执行npm run generator-entity自动生成一整套文件，包括Swagger、数据校验validate、Sequelize需要的model、controller、service、router。并自动创建数据库表，包括每个字段的类型、长度、是否能为空、默认值、注释、索引、甚至是外键都能搞定。因为加了权限控制，所以还要到前端的资源管理中添加一下新增的资源，并在角色中点选分配一下，就完成了一张表的CRUD了，包括新增、修改、详情、批量删除、分页列表。当然这还是有很多可以优化的空间的，但也基本够用了。为了优化鉴权消耗，以及满足WebSocket的可靠性设计需要，系统引入Redis做缓存。</p>
+<p>密码是加盐存储的，且在传输过程中使用了RSA做了非对称加密。Jwt认证使用Access Token + Refresh Token，配合黑名单。</p>
+<h2>效果演示</h2>
+<p>预发布环境：超级管理员账号：test-super ，密码：test-super123 <a href="https://beehives.imfdj.top/">预发布环境地址：beehives.imfdj.top</a></p>
+<p>预发布环境：普通用户账号：test-user ，密码：test-user123</p>
+<p>生产环境：普通用户账号：test-user ，密码：test-user123 <a href="https://beehive.imfdj.top/">生产环境地址：beehive.imfdj.top</a></p>
+<h2>技术栈</h2>
+<p>前端：Vue2全家桶 + Element-ui + Axios + <a href="http://Vue-socket.io">Vue-socket.io</a> + Sass <a href="https://github.com/Imfdj/vue-beehive">前端项目github地址</a></p>
+<p>后端：Egg.js + Sequelize + Jwt + Mysql + Redis + Socket + Swagger <a href="https://github.com/Imfdj/egg-beehive">后端项目github地址</a></p>
+<h2>说明</h2>
+<blockquote>
+<p>如果对您有帮助，您可以点右上角 “Star” 支持一下 谢谢！ ^_^</p>
+</blockquote>
+<blockquote>
+<p>或者您可以 “follow” 一下，我会不断开源更多的有趣的项目。如：Vue3 + NestJS + TypeScript ✨</p>
+</blockquote>
+<blockquote>
+<p>如有问题请直接在 Issues 中提，或者您发现问题并有非常好的解决方案，欢迎 PR 👍</p>
+</blockquote>
+<h2>目标功能</h2>
+<ul>
+<li>[x] 登录、注册 – 完成</li>
+<li>[x] github授权登录 – 完成</li>
+<li>[x] 找回密码 – 完成</li>
+<li>[x] 滑块验证 – 完成</li>
+<li>[x] 邮箱验证 – 完成</li>
+<li>[x] 动态首页 – 完成</li>
+<li>[x] 个人设置 – 完成</li>
+<li>[x] 用户管理 – 完成</li>
+<li>[x] 角色管理 – 完成</li>
+<li>[x] 菜单管理 – 完成</li>
+<li>[x] 资源管理 – 完成</li>
+<li>[x] 操作日志 – 完成</li>
+<li>[x] 动态菜单 – 完成</li>
+<li>[x] 部门管理 – 完成</li>
+<li>[x] 项目列表 – 完成</li>
+<li>[x] 任务看板 – 完成</li>
+<li>[x] 任务列表 – 完成</li>
+<li>[x] 项目文件 – 完成</li>
+<li>[x] 项目概览 – 完成</li>
+<li>[x] 项目成员 – 完成</li>
+<li>[x] 项目邀请 – 完成</li>
+<li>[x] 项目设置 – 完成</li>
+<li>[x] 项目回收站 – 完成</li>
+<li>[x] 任务筛选 – 完成</li>
+<li>[x] 任务详情 – 完成</li>
+<li>[x] 任务标签 – 完成</li>
+<li>[x] 任务参与者 – 完成</li>
+<li>[x] 任务动态 – 完成</li>
+<li>[x] 任务工时 – 完成</li>
+<li>[x] 任务关联文件 – 完成</li>
+<li>[x] 任务更新即时同步 – 完成</li>
+<li>[x] 公开项目的业务权限控制（非项目成员不可编辑项目） – 完成</li>
+<li>[x] 项目模板 – 完成</li>
+<li>[x] 消息提醒 – 完成</li>
+<li>[x] 工作台 – 完成</li>
+<li>[x] 站内信 – 完成</li>
+<li>[x] 页面元素权限控制 – 完成</li>
+<li>[ ] 项目版本 – 待开发</li>
+<li>[ ] 项目日程 – 待开发</li>
+</ul>
+<h2>部分截图</h2>
+<p><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/98bd6c8cc8934a468323a727a0418c14~tplv-k3u1fbpfcp-zoom-1.image" alt><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/cf106182c18b4f34b93d0b03a51c6f66~tplv-k3u1fbpfcp-zoom-1.image" alt><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/536aa525ed88463aae1ba10de25ec9fc~tplv-k3u1fbpfcp-zoom-1.image" alt><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/ca8fdca695024a4b8d7a2728b717adad~tplv-k3u1fbpfcp-zoom-1.image" alt><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/89a573d49b2646c6aa35cd74a7bbb680~tplv-k3u1fbpfcp-zoom-1.image" alt><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/0d5b6678731a4092ae53289ee367c008~tplv-k3u1fbpfcp-zoom-1.image" alt><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/a9a31bc814104964b5e63b4a0e6dd039~tplv-k3u1fbpfcp-zoom-1.image" alt><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/6c726195939f4823a27d9a56e7150fdc~tplv-k3u1fbpfcp-zoom-1.image" alt><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/6d49517621874f819df6991107c68252~tplv-k3u1fbpfcp-zoom-1.image" alt><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/30038b8cbfed4cc2aa7e8dc8d03aaf81~tplv-k3u1fbpfcp-zoom-1.image" alt><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/e8ddd9c5eb4b4219a6008b9944cb59bc~tplv-k3u1fbpfcp-zoom-1.image" alt><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/e3caf807ee6a4c108d0bf533117ea9d6~tplv-k3u1fbpfcp-zoom-1.image" alt></p>
+<h2>后端egg项目部署</h2>
+<h4>运行环境：</h4>
+<p>Node.js &gt;= v10; Mysql &gt;= 5.7; Redis &gt;= 5.0;</p>
+<pre class="prettyprint"><code>git clone https:&#x2F;&#x2F;github.com&#x2F;Imfdj&#x2F;egg-beehive.git
+
+cd egg-beehive
+
+npm install 或 yarn(推荐)
+
+将database目录下的egg-beehive-dev.sql和egg-beehive-test.sql导入mysql（推荐navicat）。
+
+在config目录下的config.local.js和config.unittest.js中的exports.sequelize、exports.redis、exports.io.redis下填入Mysql和Redis的配置参数
+
+npm run dev
+
+npm run test-local (单元测试)
+</code></pre><h4>如何快速CRUD：</h4>
+<pre class="prettyprint"><code>在generator文件夹中的config.js文件中定义各个字段的描述，完成后执行npm run generator-entity。
+里面还有很多config-*.js的配置文件可供参考。也可以在template文件夹中自定义各个文件的模板。
+
+&#x2F;&#x2F; 这是一个字段的描述模板
+fieldsItemExample: {
+    name: &#x27;xx_id&#x27;,
+    type: &#x27;INTEGER&#x27;,
+    length: 11,
+    min: 1,
+    max: 1,
+    required: true,
+    description: &#x27;这里是描述&#x27;, &#x2F;&#x2F; 供swagger使用
+    primaryKey: false, &#x2F;&#x2F; 是否为主键
+    unique: false, &#x2F;&#x2F; 是否唯一
+    allowNull: false, &#x2F;&#x2F; 是否允许为空
+    autoIncrement: false, &#x2F;&#x2F; 是否自增
+    defaultValue: &#x27;&#x27;, &#x2F;&#x2F; 数据库表中字段的默认值
+    comment: &#x27;外键&#x27;, &#x2F;&#x2F; 数据库表中字段的描述
+    references: {
+      &#x2F;&#x2F; 外键设置
+      model: &#x27;xxxs&#x27;, &#x2F;&#x2F; 外键关联表
+      key: &#x27;id&#x27;, &#x2F;&#x2F; 外键字段名
+    },
+    onUpdate: &#x27;NO ACTION&#x27;, &#x2F;&#x2F; 外键更新约束 CASCADE RESTRICT SET NULL SET DEFAULT NO ACTION
+    onDelete: &#x27;NO ACTION&#x27;, &#x2F;&#x2F; 外键删除约束 CASCADE RESTRICT SET NULL SET DEFAULT NO ACTION
+}
+</code></pre><h2>前端vue项目部署</h2>
+<pre class="prettyprint"><code>git clone https:&#x2F;&#x2F;github.com&#x2F;Imfdj&#x2F;vue-beehive.git
+
+cd vue-beehive
+
+npm install 或 yarn(推荐)
+
+npm run serve
+</code></pre><h2>功能设计</h2>
+<p><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/3a57ff9d3eb8482691bc50aa5e029bf9~tplv-k3u1fbpfcp-zoom-1.image" alt></p>
+<h2>后端设计</h2>
+<p><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/ae66afbb7bc24cb5af6b07249f99c88a~tplv-k3u1fbpfcp-zoom-1.image" alt></p>
+<h2>数据库设计</h2>
+<p><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/6bd0481b00f4475fa77a970db1df5011~tplv-k3u1fbpfcp-zoom-1.image" alt></p>
+<h3>License</h3>
+<p><a href="https://github.com/Imfdj/vue-beehive/blob/master/LICENSE">MIT</a></p>
+<p>Copyright © 2021 Imfdj</p>
+</div>

@@ -1,0 +1,175 @@
+<div class="markdown-text"><h2>CabloyJS内置工作流引擎的基本介绍</h2>
+<h3><strong>1. 由来</strong></h3>
+<p>众所周知，NodeJS作为后端开发语言和运行环境，支持高并发、开发效率高，有口皆碑，但是大多用于<code>数据CRUD管理</code>、<code>中间层聚合</code>和<code>中间层代理</code>等工具场景，很少深入到业务领域的核心。有许多用NodeJS开发的<code>最小可用产品（MVP）</code>最终会另起炉灶重构，这是原因之一</p>
+<p>究其根源，NodeJS作为业务开发平台，还缺少许多核心的基础构件，<code>NodeJS工作流引擎</code>便是其一。CabloyJS从4.0版本起，重点开发了NodeJS工作流引擎，并作为内置的基础核心模块（同样是开源、免费），近一步拓展了NodeJS在后端的应用场景，为深入研发各类商业业务逻辑，提供了基础支撑</p>
+<h3><strong>2. 特点</strong></h3>
+<ol>
+<li>
+<p>更简便的配置：采用<code>JSON</code>进行流程定义的配置，告别<code>XML</code>配置文件的冗杂</p>
+</li>
+<li>
+<p>更清晰的架构：基于<code>分层机制</code>采用多个核心模块来搭建工作流引擎的架构，让工作流不再神秘，源码也不再叠床架屋</p>
+</li>
+</ol>
+<h2>边界事件的概念与实现</h2>
+<h3>1. Activiti的边界事件</h3>
+<p>在<code>Activiti</code>流程引擎中，可以通过<code>边界事件</code>向<code>流程节点</code>附加特定用途的处理逻辑。比如，向<code>流程节点</code>增加一个<code>定时器边界事件</code>，如果节点在指定的时间内没有执行完毕，就会自动触发<code>边界事件</code></p>
+<h3>2. CabloyJS的节点行为</h3>
+<p>由于<code>边界事件</code>的本质是向<code>流程节点</code>附加特定的<code>行为</code>。 因此，CabloyJS采用<code>节点行为</code>机制来实现类似<code>Activiti</code>中<code>边界事件</code>的功能</p>
+<p>CabloyJS为<code>节点行为</code>设计了统一的开发规范，允许第三方开发自定义的<code>节点行为</code>类型。CabloyJS系统本身也将根据业务的实际需求以及优先级，持续增加内置的<code>节点行为</code>类型</p>
+<h2>3. 边界事件与节点行为的区别</h2>
+<ol>
+<li>
+<p><code>配置简洁</code>：</p>
+<ol>
+<li>
+<p>在Activiti中，<code>边界事件</code>由单独的XML节点配置，并与<code>活动节点</code>建立连接</p>
+</li>
+<li>
+<p>在CabloyJS中，直接在<code>活动节点</code>的JSON配置中添加<code>行为</code>配置，使得流程定义文件更加简洁、紧凑</p>
+</li>
+</ol>
+</li>
+<li>
+<p><code>开发简便</code>：</p>
+<ol>
+<li>
+<p>在Activiti中，提供了几个内置的<code>边界事件</code>，大多数场景都是基于这些内置<code>边界事件</code>做开发，却鲜有人尝试开发自定义的<code>边界事件</code></p>
+</li>
+<li>
+<p>在CabloyJS中，提供了非常清晰的编程接口，不仅内置常用的<code>节点行为</code>，而且允许第三方非常便捷的开发自定义的<code>节点行为</code>类型</p>
+</li>
+</ol>
+</li>
+</ol>
+<h2>演示</h2>
+<p>下面的动图演示了：</p>
+<ol>
+<li>
+<p>向<code>审核节点</code>增加<code>超时行为</code>，系统自动分配了一个颜色，用于区分不同的<code>行为</code></p>
+</li>
+<li>
+<p>设置<code>行为</code>的配置：<code>持续时间</code></p>
+</li>
+<li>
+<p>从<code>行为</code>拉出一根<code>转移线</code>，指向<code>起草节点</code></p>
+</li>
+<li>
+<p>效果：当超过指定的时间还没有审核完毕，就会自动转向<code>起草节点</code></p>
+</li>
+</ol>
+<p><img src="https://admin.cabloy.com/api/a/file/file/download/e6948d9a0a994c878f8be5eaf172cdc6.gif" alt="flowbehavior-zhcn"></p>
+<p>如果要进一步研究如何创建一个完整的<code>流程定义</code>，请参见：</p>
+<ol>
+<li>
+<p><a href="https://cabloy.com/zh-cn/articles/flow-demo-cms.html">演示：CMS审批工作流</a></p>
+</li>
+<li>
+<p><a href="https://cabloy.com/zh-cn/articles/flowchart-demo.html">演示：CMS审批工作流(可视化编辑)</a></p>
+</li>
+</ol>
+<h2>JSON规范</h2>
+<p>为了支持<code>节点行为</code>，在原有流程定义的基础之上，同时扩展了<code>活动节点JSON规范</code>和<code>转移线JSON规范</code>，参见：</p>
+<ol>
+<li>
+<p><a href="https://cabloy.com/zh-cn/articles/flowdef-json.html">流程定义JSON规范</a></p>
+</li>
+<li>
+<p><a href="https://cabloy.com/zh-cn/articles/flow-node-json.html">活动节点JSON规范</a></p>
+</li>
+<li>
+<p><a href="https://cabloy.com/zh-cn/articles/flow-edge-sequence-json.html">转移线JSON规范</a></p>
+</li>
+</ol>
+<h3>1. 活动节点JSON规范</h3>
+<p>在常规的<code>活动节点JSON规范</code>中增加了<code>behaviors</code>属性。由于一个<code>节点</code>可以附加多个<code>行为</code>，因此<code>behaviors</code>是一个数组</p>
+<pre class="prettyprint language- javascript"><code>{
+  id: &#x27;activity_1&#x27;,
+  name: &#x27;Review&#x27;,
+  type: &#x27;activityUserTask&#x27;,
+  options: {
+    assignees: {
+      vars: &#x27;flowUser&#x27;,
+    },
+  },
+  behaviors: [
+    {
+      id: &#x27;behavior_1&#x27;,
+      name: &#x27;Overtime&#x27;,
+      type: &#x27;overtime&#x27;,
+      color: &#x27;#FF3B30&#x27;,
+      options: {
+        cancelActivity: true,
+        timeDuration: 3000,
+      },
+    },
+  ],
+},
+</code></pre><ul>
+<li>behavior</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>名称</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id</td>
+<td>行为唯一标识</td>
+</tr>
+<tr>
+<td>name</td>
+<td>行为名称</td>
+</tr>
+<tr>
+<td>type</td>
+<td>行为类型</td>
+</tr>
+<tr>
+<td>color</td>
+<td>行为颜色。由于<code>行为</code>也可以引出<code>转移线</code>，因此可以通过不同的颜色进行区分</td>
+</tr>
+<tr>
+<td>options</td>
+<td>行为配置，对应不同的行为类型</td>
+</tr>
+</tbody>
+</table>
+<h3>2. 转移线JSON规范</h3>
+<p>在常规的<code>转移线JSON规范</code>中增加了<code>behavior</code>属性，用于标识该<code>转移线</code>所对应的<code>行为Id</code></p>
+<pre class="prettyprint language- javascript"><code>{
+  id: &#x27;edge_3&#x27;,
+  source: &#x27;activity_1&#x27;,
+  target: &#x27;startEvent_1&#x27;,
+  behavior: &#x27;behavior_1&#x27;,
+},
+</code></pre><table>
+<thead>
+<tr>
+<th>名称</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>behavior</td>
+<td>对应的<code>行为Id</code>，如果不设置就是<code>节点</code>本身引出的<code>转移线</code></td>
+</tr>
+</tbody>
+</table>
+<h2><strong>相关链接</strong></h2>
+<ul>
+<li>
+<p>CabloyJS网站: <a href="https://cabloy.com/">https://cabloy.com/</a></p>
+</li>
+<li>
+<p>NodeJS工作流引擎文档：<a href="https://cabloy.com/zh-cn/articles/flow-introduce.html">https://cabloy.com/zh-cn/articles/flow-introduce.html</a></p>
+</li>
+<li>
+<p>GitHub源码仓库: <a href="https://github.com/zhennann/cabloy">https://github.com/zhennann/cabloy</a></p>
+</li>
+</ul>
+</div>

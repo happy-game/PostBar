@@ -1,0 +1,50 @@
+<div class="markdown-text"><p><a href="https://code.visualstudio.com">Visual Studio Code</a>
+由微软开发且跨平台的免费源代码编辑器，可以在macOS, Linux, and Windows等操作系统使用。它支持语法高亮、代码自动补全（又称 IntelliSense）、代码重构、查看定义功能，并且内置了命令行工具和 Git 版本控制系统。用户可以更改主题和键盘快捷方式实现个性化设置，也可以通过内置的扩展程序商店安装扩展以拓展软件功能。它默认支持包括 JavaScript、TypeScript、CSS 和 HTML在内的多种语言；也可以通过下载扩展支持 Python、C/C++、Java 和 Go 在内的其他语言。 在 2019 年的 Stack Overflow 组织的<a href="https://insights.stackoverflow.com/survey/2019#technology-_-most-popular-development-environments">开发者调查</a>中，Visual Studio Code 被认为是最受开发者欢迎的开发环境。</p>
+<p>应用场景：</p>
+<ol>
+<li>遇到非常繁琐的开发环境配置，需要自己安装和配置各种工具和插件。VSCRD的远程工作区的<a href="https://github.com/microsoft/vscode-dev-containers/tree/main/containers">模板</a>，便可以轻松搞定。</li>
+<li>本地机器配置较低，无法进行某些计算需求高的开发。可以在VSCRD里，直接操作远程文件系统，使用远程计算资源，来完成相关开发需求。</li>
+</ol>
+<p><a href="https://www.jetbrains.com/remote-development/">Jet Brains Remote development</a>
+Jet Brains 有一系列的远程开发工具链，满足不同技术开发者的需求，包括JetBrains Gateway, JetBrains Fleet, JetBrains Space, JetBrains Client等。支持多种Jet Brains语言：IntelliJ IDEA、PyCharm、GoLand、PhpStorm、RubyMine。您可以在远程服务器上托管源代码、工具链和 IDE 后端，并使用基于 IntelliJ 平台的本地轻量级客户端来编写、导航、重构、运行、调试和测试您的项目。
+整个过程由 JetBrains Gateway 管理，JetBrains Gateway 是一款全新的、紧凑的、独立的应用程序，可提供您开始远程开发所需的一切。 Gateway 还作为插件与许多 JetBrains IDE 捆绑在一起。
+<img src="//static.cnodejs.org/FsimsPdeIQH4fMouMBkwYjf20MaX" alt="JBR-development.png">
+JetBrains 客户端在本地运行，并为 IDE 后端提供用户界面。它基于 IntelliJ 平台，感觉就像一个完整的基于 IntelliJ 的 IDE——它具有与本地 IDE 相同的编辑器、代码完成、导航、检查和重构工具，但所有文件都远程托管，所有语言处理在远程服务器上完成。远程开发利用强大的基于云的服务器、创建可重现、干净的开发环境，并避免本地源代码丢失所带来的影响。</p>
+<p><a href="https://www.teamcode.com/products/dcs">Pylon</a>
+Pylon 是 TeamCode 云开发工具链中一款快速自动构建可扩缩的云端开发环境的产品。它可以通过 Git 仓库地址快速搭建标准化的开发环境。它支持主流 IDE 和浏览器，支持客户端 IDE 接入，可与 TeamCode Cloud-IDE 无缝连接。支持多种语言，已支持 Java、Python、Go、Typescript 等。
+<img src="//static.cnodejs.org/Flo6ssnGZJCT_Qo28JggpbpGEbcf" alt="Pylon1.png">
+优势</p>
+<ol>
+<li>开发环境云端自动化管理，降低人力及研发成本</li>
+<li>代码及研发数据云端存储，加强研发数据安全性</li>
+<li>研发过程云端管理，数据透明化，提升管理效率
+<img src="//static.cnodejs.org/FtdUFtAUE3POMINKhQZAHtQoc6qA" alt="Pylon2.png"></li>
+</ol>
+<p>应用场景：</p>
+<ol>
+<li>快速加入团队开发项目</li>
+</ol>
+<ul>
+<li>使用 Pylon 快速启动该项目；</li>
+<li>使用 Cloud-IDE 打开该项目；</li>
+<li>开始编码。</li>
+</ul>
+<ol>
+<li>高效远程协作开发</li>
+</ol>
+<ul>
+<li>加入团队组织；</li>
+<li>选择需要协作的项目；</li>
+<li>使用 Cloud-IDE 或者本地 IDE 打开项目；</li>
+<li>开始编码。</li>
+</ul>
+<p><a href="https://docs.docker.com/desktop/dev-environments/">Docker Dev Environment</a>
+Docker的 Dev Environments 支持轻松设置可重复的开发环境，将环境详细信息与代码一起版本化。它支持一键共享正在进行的代码，而无需处理任何合并冲突，同时在 Git 分支之间移动，将代码放到他们的机器上。可以从一个特定分支或标签创建一个远程环境。还可以在Docker Hub中与团队共享开发环境。
+<img src="//static.cnodejs.org/FtPtT7nHksIugPzxse9R4IzQ6wzU" alt="DDV.png">
+它支持以下方式创建一个开发环境：</p>
+<ol>
+<li>Git仓库地址</li>
+<li>本地文件夹</li>
+<li>Docker镜像地址</li>
+</ol>
+</div>

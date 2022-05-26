@@ -1,0 +1,5 @@
+<div class="markdown-text"><blockquote>
+<p>这里要补充的知识是像 create-react-app、next、jest 等 Node 工具都默认不会让 babel 去处理 node_modules 中包的代码, 因为按规范, 每个包发布到 npm 中时都最好是 es5 等兼容性良好的代码, 而非 jsx, ts 等需要二次编译的代码</p>
+</blockquote>
+<p>这个“规则”就是 webpack 开得坏头，把自己的性能问题转嫁出去了。比如应用 A 目标 target 是 esnext，它的依赖包 B 中却还使用 es5，但依赖包 B 的源码其实早已使用 modern js 了，为了解决构建慢的问题编译成 es5，这个时候对于应用 A 而言，它在应用体积和性能上都被牵连了</p>
+</div>

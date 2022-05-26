@@ -1,0 +1,5 @@
+<div class="markdown-text"><p>目测 require 缓存造成的，catch 语句里面先删除一次缓存试试</p>
+<pre class="prettyprint"><code>await execa(&#x27;npm&#x27;, [&#x27;install&#x27;, moduleName]);
+delete require.cache[moduleName];
+return require(moduleName);
+</code></pre></div>

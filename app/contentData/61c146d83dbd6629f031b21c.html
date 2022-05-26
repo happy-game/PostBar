@@ -1,0 +1,32 @@
+<div class="markdown-text"><p>我想实现一个函数，当目标模块已下载时，直接通过 require 引入，否则去npm下载，完成后再引入。
+原先的代码是这样的：</p>
+<pre class="prettyprint language-js"><code>const execa = require(&#x27;execa&#x27;);
+const requireDynamic = async moduleName =&gt; {
+    try {
+        return require(moduleName);
+    } catch {
+        await execa(&#x27;npm&#x27;, [&#x27;install&#x27;, moduleName]);
+        return require(moduleName);
+    }
+};
+</code></pre><p>但是这样会报错，提示模块不存在。
+而我在模块安装结束后用下面这段代码确认模块已经安装，模块文件夹是存在的：</p>
+<pre class="prettyprint language-javascript"><code>const fs = require(&#x27;fs-extra&#x27;);
+const path = require(&#x27;path&#x27;);
+console.log(fs.pathExists(path.resolve(process.cwd(), &#x27;node_modules&#x27;, moduleName)));
+</code></pre><p>我怀疑模块下载成功后没能立即允许引入，所以开了定时器<code>setInterval</code> 来确认什么时候可以引入，但是一直都不可以。
+后来我先找到这个模块的<code>package.json</code> ，然后在<code>main</code>字段找到模块的入口文件，引入这个文件，是可以的。</p>
+<pre class="prettyprint language-js"><code>const execa = require(&#x27;execa&#x27;);
+const path = require(&#x27;path&#x27;);
+const requireDynamic = async moduleName =&gt; {
+    try {
+        return require(moduleName);
+    } catch {
+        await execa(&#x27;npm&#x27;, [&#x27;install&#x27;, moduleName]);
+        const modulePath = path.resolve(process.cwd(), &#x27;node_modules&#x27;, moduleName);
+        const { main } = require(path.resolve(modulePath, &#x27;package.json&#x27;));
+        return require(path.resolve(modulePath, main));
+    }
+};
+</code></pre><p>我就是没明白，npm模块从下载，解压，还要经过什么流程，才可以被正常引入。希望有好心人解答下，谢谢了。</p>
+</div>

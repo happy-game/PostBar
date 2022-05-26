@@ -1,0 +1,15 @@
+<div class="markdown-text"><p>在中国有很多特色的东西，防火长城阻碍了很多人浏览外界的机会，也成就了很多人，比如：一度很火的红杏。但是，这些服务，都不长久，慢慢都被和谐了。所以，掌握几个免费的Vpn是必要的。这里，介绍我常用的几个，希望对大家有帮助：</p>
+<h2>（1）Lantern</h2>
+<p>这是一个免费、简单、开源，基于P2P网络，去中心化的应用程序。它的目标就是帮助你随时随地快速、可靠、安全地访问互联网。支持移动android等。</p>
+<p>源码在这里：<a href="https://github.com/getlantern/lantern">https://github.com/getlantern/lantern</a></p>
+<p>官方网站https://getlantern.org/</p>
+<p>直接下载安装即可。</p>
+<h2>（2）Bitnet</h2>
+<p>中文名叫微币，原来叫vpncoin，是一种加密货币，当然也是去中心化的应用了。一开始也是以提供科学上网vpn起家的，你可以在线挣取其他节点的上网时间。</p>
+<p>官网：<a href="http://www.bitnet.cc/">http://www.bitnet.cc/</a></p>
+<h2>（3）自己快速搭建</h2>
+<p>亚马逊，提供了一个1年期的免费主机，配置也足够用了。在 ec2虚拟机上，安装一个Ubuntu服务器。使用下面的一条命令，打造一个ssh代理：</p>
+<pre class="prettyprint"><code>sudo ssh -v -i ~&#x2F;.ssh&#x2F;Your.pem ubuntu@[EC2公网IP] -D 8888 -C
+</code></pre><p>Your.pem是您的密钥，aws必须的。EC2公网IP，aws会自动分配。8888为代理端口号，代理服务器是<code>localhost</code>。然后，在浏览器的代理设置里，就可以直接用了。</p>
+<p>喜欢加密货币的小盆友，可以联系我，微信：kubying</p>
+</div>

@@ -1,0 +1,8 @@
+<div class="markdown-text"><p><a href="/user/atian25">@atian25</a> 谢谢你的回答哇，我看agent部分的时候，确实看到了配置一些目录后由它进行的自动重启，提到的另外两个egg-schedule和晚egg-configserver模块上我再翻翻源码学习下设计思路~
+对于您提到的：parent是给启动脚本用的，指的是egg-bin下的dev/debug/test/cov四种启动方式吗，这一块也大致看了下，确实是使用fork子进程的方式启动了start-cluster这个入口文件，那么这里的parent指的就是egg-bin脚本启动的进程吧。</p>
+<p>后面的几点我看了下，确实是看源码的时候没有想清楚，app是可以拿到的。在/mixin/custom.js里面的loadCustomApp（）方法提供了，参数不带inject并且是函数的话会传入this.app执行该函数。
+egg不绑定view实现倒是看到了的，可能上文对view的编写描述的太简陋了。Egg设计的大致流程应该是view插件的extend/applicaton.js创建一个Symbol.for(‘egg#view’)]属性对应View引擎类，然后在egg的extend/appliction中创建的view基类实现了一些类似setLocals等基本方法，再继承上述的真正的模板引擎类，render方法则调用的是父类的render方法（super.render）。</p>
+<p>然后提到的framework机制我回头要仔细看看，之前也只看到了egg-init能生成framework，但是没去理解它的作用，我其实当时还在想，app.Service要是能对外暴露一个接口，让公司自己实现一些核心接口调用进去，那开发者直接编写service层的东西继承app.Service就能更加方便的本土化了。听描述framework就是定制这一类的公司私有业务吧</p>
+<p>我本人其实非常有兴趣加入eggjs的开发哇，其实看完了egg的实现后，我原本打算自己写一个koa 2.x的升级版（只包含application，用PM2管理），因为核心的重载createContext方法的思路在koa 2.x中没有问题，koa2.x主要是它核心的compose方法被改了，导致中间件写法的一些区别。话说要怎么样才能参与现在的Eggjs呢：）</p>
+<p>最后还是一个问题：是关于agent的，按照您描述的agent设计思路，能否将一些cpu密集的复杂运算丢给agent做（以前），这样节省主业务app进程的资源呢？</p>
+</div>

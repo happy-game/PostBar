@@ -1,0 +1,33 @@
+<div class="markdown-text"><p>摘要
+<a href></a>KubeOrbit是一款云原生应用的微服务集成测试工具。本篇文章将从其技术实现的角度，为大家介绍涉及到的技术及设计逻辑，帮助大家理解这个开源产品，也期待未来有更多开发力量的加入。</p>
+<p>1 背景介绍
+<img src="//static.cnodejs.org/FkcHOjbH1KW7cPcsqBAPu-gB9JC4" alt="service_mesh.jpg">
+上图是 Red Hat 提供的一张服务网格数据平面的构图，绿色部分是实际的应用程序，蓝色部分便是网络代理，这在服务网格中被称为 Sidecar，Sidecar 应用与应用程序共享相同的生命周期，与应用程序一起创建和退出。
+云原生技术发展至今，服务网格已经被大量企业实施落地，通过接管分布式服务的通信层流量，成功让许多企业团队开箱即可获得负载均衡、服务发现、认证授权、监控追踪、流量控制等分布式系统所需要的功能。但是目前仅通过服务网格无法实现高效的微服务多环境测试，KubeOrbit即是解决这类场景设计出的。
+KubeOrbit（官网：<a href="http://www.kubeorbit.io">www.kubeorbit.io</a>）是一个 Kubernetes Operator， 提供逻辑环境隔离的方案，同时借助现成的流量治理基础设施层以低成本的方式帮助用户解决测试环境治理的痛点。</p>
+<p>2 技术实现
+2.1 KubeOrbit概念介绍
+KubeOrbit 主要的能力是通过创建逻辑隔离环境的方式，基于 Kubernetes 定制的资源对象，将其下发至各种服务网格的数据平面，建立起带标识的调用链路，达到按需增量扩展测试和联调环境的需求，核心组件展示如下：
+<img src="//static.cnodejs.org/Fi-PizIgl20mPob5FGNNdFD-OtXA" alt="orbit.jpg"></p>
+<p>2.2 Orbit
+Orbit 对象代表一个完整的，单独的一套逻辑隔离环境，通过描述 provider 选择集群中的（或者部署新的）服务网格。以 Istio 实现为例，Spec 中定义的配置会转化成相应的 Istio CRD，通过生成 Outbound Filter 为隔离环境中带标识的工作负载实现标识传递。
+<img src="//static.cnodejs.org/FjnVTwdi1zo1YhXvnWDZWwztJgNC" alt="orbit-2.jpg"></p>
+<p>2.3 ServiceRoute
+ServiceRoute 的作用主要是：定义具体的服务路由被转发的策略，如转发到哪些副本，默认的转发策略，以及通过何种流量标识转发。这里还是以 Istio 实现举例，Spec中定义的路由策略会转化成Istio VirtualService 和 DestinationRule，来支持不同副本的流量转发。
+<img src="//static.cnodejs.org/Fm1GdI0NxR1Zs1ag5dJ1akchnM1y" alt="serviceroute.jpg"></p>
+<p>2.4 流量路径
+完成 CRD 的创建后，流量即可按规则路由至环境中携带流量标识的工作负载，以入口为微服务网关为例，东西向的流量调度示意如下：
+<img src="//static.cnodejs.org/FiJ7V6dd-69GKh_A544ey-IQ2hhs" alt="traffic_route.jpg"></p>
+<p>2.5 染色透传
+如果在流量源头将请求染色，那么请求经过网关时，网关作为代理会将请求原封不动的转发给入口服务。紧接着，请求流量会从入口服务开始调用下一个微服务，会根据业务逻辑形成新的调用请求。那么我们如何将流量标识添加到这个新的调用请求，从而可以在链路中传递下去呢？ 如今的微服务之间调用是从本地进程的服务调用远端进程中的服务，并且远端服务可能以多副本容器形式部署，以至于一条请求流经的节点是不可预知的、不确定的，这对于透明代理 Sidecar 来说想通过不侵入的方式接管更是无能为力，KubeOrbit 当前版本中的流量标识能够在链路中一直传递下去，需要依赖 Trace 方案中的自定义信息功能，未来会对接常见的 Skywalking、OpenTelemetry、Zipkin等社区方案。</p>
+<p>3 展望
+下一步 KubeOrbit 将继续迭代核心功能，扩展应用场景，主要会有以下几个部分：</p>
+<ul>
+<li>主流微服务注册中心支持</li>
+<li>常见 Layer-7 协议支持</li>
+<li>CLI 工具</li>
+</ul>
+<p>目前，<a href="https://www.kubeorbit.io/"></a>KubeOrbit已<a href="https://github.com/teamcode-inc/kubeorbit"></a>开放全部代码，欢迎各位开发者朋友加入，一起探讨。
+GitHub地址：<a href="https://github.com/teamcode-inc/kubeorbit">https://github.com/teamcode-inc/kubeorbit</a>
+同时，任何疑问或想法，也欢迎通过<a href="https://discord.gg/5XaTS9VArf"></a>Discord频道及时与我们反馈和交流。</p>
+</div>

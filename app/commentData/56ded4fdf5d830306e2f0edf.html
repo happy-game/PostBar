@@ -1,0 +1,20 @@
+<div class="markdown-text"><p>generator/yield跟同步都差远了，何况promise？</p>
+<p>真正的同步应该是这样的</p>
+<pre class="prettyprint language-lua"><code>local fs = require(&#x27;fs&#x27;)
+local name = fs.readFile(&#x27;test.txt&#x27;)
+name = fs.readFile(name)
+name = fs.readFile(name)
+name = fs.readFile(name)
+name = fs.readFile(name)
+name = fs.readFile(name)
+name = fs.readFile(name)
+name = fs.readFile(name)
+name = fs.readFile(name)
+name = fs.readFile(name)
+name = fs.readFile(name)
+name = fs.readFile(name)
+print(name)
+</code></pre><p>generator就是用来模拟同步的，内里本质还是回调异步，也就是说你还是要用异步的思维方式去写异步程序，但可以用同步的方式来表达。</p>
+<p>原来那种回调异步模式，代码时间长了，回过头来看，有可能出现自己都看不明白的危险。有了generator，同步表达就容易理解得多，但编码的时候还是偏向异步思维方式，需要透彻的理解回调异步。</p>
+<p><strong>最完美的异步模式是没有显式的异步，代码不需要generator/yield或者async/await的包装转换，就是直接写同步代码，思维方式也是同步的，也不需要理解回调异步。</strong></p>
+</div>

@@ -1,0 +1,9 @@
+<div class="markdown-text"><p>原issue：
+看到package.json里的&quot;connect-busboy&quot;: &quot;0.0.2&quot;写死版本了。然后到connect-busboy看到mscdex/connect-busboy#21 里写的</p>
+<p>v0.0.3 is released that fixes the semver range to match the pre-v1.0 busboy.
+v1.0.0 is released to match the changes in busboy v1.0.</p>
+<p>现在尝试按照，在pacakge-lock.json里的&quot;connect-busboy&quot;: “0.0.2”，依赖安装到的busboy为*，实际安装的是1.4.0版本。所以再注册用户时会报错Busboy is not a constructor。感觉connect-busboy不太好改。是否您这边把connect-busboy升高会好点呢。
+解决方案：修改两个依赖如下：
+“busboy”: “*”,
+“connect-busboy”: “0.0.3”,</p>
+</div>

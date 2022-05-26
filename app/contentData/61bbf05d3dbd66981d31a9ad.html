@@ -1,0 +1,51 @@
+<div class="markdown-text"><p>原本是好的，后边被其他人好像改了数据库端口，后面改回来后就报这个错了。希望有大佬能看看
+数据库配置
+`
+let app = {
+user: ‘xx’,
+password: ‘xx’,
+server: ‘127.0.0.1’,
+database: ‘xxxx’,
+port: 2223,	
+options: {
+encrypt: true,
+trustServerCertificate: true,
+},
+pool: {			
+min: 0,
+max: 100,
+idleTimeoutMillis: 3000,
+},</p>
+<p>};
+<code>数据库连接代码</code>
+const mssql = require(‘mssql’);
+const config = require(&quot;./config.js&quot;);</p>
+<p>const pool1 = new mssql.ConnectionPool(config);
+const pool1Connect = pool1.connect();</p>
+<p>pool1.on(‘error’, err =&gt; {
+// … error handler
+})</p>
+<p>async function query(sql,callback ) {
+await pool1Connect; // ensures that the pool has been created
+try {
+const request = pool1.request(); // or: new sql.Request(pool1)
+const result = await request.query(sql)
+callback(null, result);
+} catch (err) {
+callback(err, null);
+console.error(‘SQL error’, err);
+}
+}
+`
+(node:11964) UnhandledPromiseRejectionWarning: ConnectionError: Failed to connect to 127.0.0.1:2223 - Cannot call write after a stream was destroyed
+at Connection.&lt;anonymous&gt; (D:\WX\wechatService - 副本\node_modules\mssql\lib\tedious.js:244:17)
+at Object.onceWrapper (events.js:422:26)
+at Connection.emit (events.js:315:20)
+at Connection.socketError (D:\WX\wechatService - 副本\node_modules\tedious\lib\connection.js:1095:12)
+at Socket.&lt;anonymous&gt; (D:\WX\wechatService - 副本\node_modules\tedious\lib\connection.js:971:14)
+at Socket.emit (events.js:327:22)
+at errorOrDestroy (internal/streams/destroy.js:108:12)
+at onwriteError (_stream_writable.js:418:5)
+at onwrite (_stream_writable.js:445:5)
+at doWrite (_stream_writable.js:399:11)</p>
+</div>

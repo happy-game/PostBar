@@ -1,0 +1,31 @@
+<div class="markdown-text"><p>标题纯粹是为了应景 <a href="https://leerob.io/blog/rust">Rust Is The Future of JavaScript Infrastructure</a></p>
+<p>esbuild 作者用脚踏实地的作品向社区展示了 Go 是前端基础设施的未来</p>
+<p>parcel 更是给出了实测结果
+<img src="//static.cnodejs.org/FoaNZVShUoHL09AtZ4F4Wemo7umo" alt="1ne1E-PLnsoRuiB56mOK5vrnwLE3nF3-1xoDqZgk-0A.png"></p>
+<p>esbuild 虽好，但还有两个不足：</p>
+<ul>
+<li>它的需要借助一些插件，比如处理 Less Scss 时。将 esbuild 作为 wepack 插件则损失了其绝大部分性能</li>
+<li>它的 JavaScript/TypeScript Parser 主要针对构建的场景，并且是 internal 包</li>
+</ul>
+<blockquote>
+<p>为什么不在 esbuild 的基础上堆砌?</p>
+<p>Parser 作为后续的基础，需要有一定的可控性，而 esbuild 已经是针对构建的场景了</p>
+</blockquote>
+<p>既然 Go 是前端基础设施的未来，我决定搞一个事情 - 用 Go 形成一个前端基础设施的闭环，为此我创建了项目 <a href="https://github.com/hsiaosiyuan0/mole">mole</a></p>
+<p>当然，为了保持 Go 社区踏实的风气，我已经开了一个头：</p>
+<ul>
+<li>使用 Go 编写了 JavaScript Parser，覆盖 2000 多单测试，性能比 esbuild 中 Paser 的略好</li>
+</ul>
+<p><img src="https://p6.music.126.net/obj/wo3DlcOGw6DClTvDisK1/11811169573/a972/03b7/9480/7264837f763ff1c4415079c61f141861.png" alt></p>
+<p>大家可以在线体验 wasm 版本 <a href="http://blog.thehardways.me/mole-is-more/#/">demo</a></p>
+<p>当然也可以在 <a href="https://github.com/hsiaosiyuan0/mole">mole</a> 主页下载可执行二进制版本，亦或是从源码直接编译</p>
+<p>接下来的计划是：</p>
+<ul>
+<li>JSX</li>
+<li>Indenter（Prettier）</li>
+<li>Lint</li>
+<li>CSS/Less/Scss</li>
+<li>TypeScript Parser</li>
+</ul>
+<p>欢迎大家参与，哪怕仅仅是一个 Star  <a href="https://github.com/hsiaosiyuan0/mole">mole</a> 🤟</p>
+</div>

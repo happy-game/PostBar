@@ -1,0 +1,143 @@
+<div class="markdown-text"><p><img src="https://user-images.githubusercontent.com/6822604/130725631-dde49c00-24fe-44c6-a3fd-a5c709ce6e57.png" alt></p>
+<h2>项目地址</h2>
+<p><a href="https://github.com/tnfe/mdebug">https://github.com/tnfe/mdebug</a></p>
+<h2>一、特点</h2>
+<ul>
+<li>使用cdn方式,一键接入</li>
+<li>类Chrome devtools, 内嵌React开发者工具,支持日志,网络,元素,代理,存储,性能等, 具有更好的网络捕获能力和丰富的日志展现形式</li>
+<li>暴露内部丰富的事件, 可以和react组件无缝进行集成</li>
+<li>支持大数据量展示, 不卡顿</li>
+</ul>
+<h2>二、快速体验</h2>
+<p><a href="https://tnfe.github.io/mdebug">https://tnfe.github.io/mdebug</a></p>
+<p><img src="https://user-images.githubusercontent.com/6822604/131059931-7efb7494-82fe-4a27-bd79-ed2bd9ce2c11.png" alt="image">
+<img src="https://user-images.githubusercontent.com/6822604/132209308-b48bcd5f-f6f2-44b2-ba2e-ab79984d59ce.png" alt></p>
+<h2>三、Examples</h2>
+<ul>
+<li>Vanilla</li>
+</ul>
+<p><a href="https://codesandbox.io/s/crimson-sun-py8x7?fontsize=14&amp;hidenavigation=1&amp;theme=dark"><img src="https://codesandbox.io/static/img/play-codesandbox.svg" alt="Edit crimson-sun-py8x7"></a></p>
+<h2>四、安装</h2>
+<h4>Install using npm</h4>
+<pre class="prettyprint language-"><code>npm install mdebug --save
+
+</code></pre><h2>五、使用</h2>
+<h3>1. ES6</h3>
+<pre class="prettyprint language-javascript"><code>  import mdebug from &#x27;mdebug&#x27;;
+  mdebug.init();
+</code></pre><h3>2.CDN</h3>
+<pre class="prettyprint language-javascript"><code>(function() {
+    var scp = document.createElement(&#x27;script&#x27;);
+    &#x2F;&#x2F; 加载最新的mdebug版本
+    scp.src = &#x27;https:&#x2F;&#x2F;unpkg.com&#x2F;mdebug@latest&#x2F;dist&#x2F;index.js&#x27;;
+    scp.async = true;
+    scp.charset = &#x27;utf-8&#x27;;
+    &#x2F;&#x2F; 加载成功并初始化
+    scp.onload = function() {
+        mdebug.init();
+    };
+    &#x2F;&#x2F; 加载状态切换回调
+    scp.onreadystate = function() {};
+    &#x2F;&#x2F; 加载失败回调 
+    scp.onerror = function() {};
+    document.getElementsByTagName(&#x27;head&#x27;)[0].appendChild(scp);
+})();
+</code></pre><h2>六、API</h2>
+<h3>1. init</h3>
+<pre class="prettyprint language-javascript"><code>mdebug.init({
+    containerId: &#x27;&#x27; &#x2F;&#x2F; mdebug挂载容器id, 如果传空, 内部会自动生成一个不重复的id,
+    plugins: [], &#x2F;&#x2F; 传入mdebug插件
+    hideToolbar: [], &#x2F;&#x2F; 传入需要隐藏的tab id
+});
+</code></pre><h3>2. addPlugin</h3>
+<pre class="prettyprint language-javascript"><code>mdebug.addPlugin({
+    id: &#x27;&#x27;, &#x2F;&#x2F; tab id
+    name: &#x27;&#x27;, &#x2F;&#x2F; tab对应的中文title,
+    enName: &#x27;&#x27;, &#x2F;&#x2F; tab对应的英文title
+    component: () =&gt; {}, &#x2F;&#x2F; tab对应的react组件
+});
+</code></pre><h3>3. removePlugin</h3>
+<pre class="prettyprint language-javascript"><code>&#x2F;&#x2F; 支持移除的panel对应的id
+&#x2F;*
+System =&gt; system;
+Elements =&gt; elements;
+Console =&gt; console
+Application =&gt; application
+NetWork =&gt; network
+Performance =&gt; performance
+Settings =&gt; settings
+*&#x2F;
+mdebug.removePlugin([]);
+</code></pre><h3>4. exportLog</h3>
+<pre class="prettyprint language-javascript"><code>&#x2F;*
+@returned {
+  type: &#x27;&#x27; &#x2F;&#x2F; 日志类型
+  source: [], &#x2F;&#x2F; 原始日志
+}
+@params type
+&#x2F;&#x2F; type等于log, 返回所有的console日志
+&#x2F;&#x2F; type等于net, 返回所有的net日志
+*&#x2F;
+mdebug.exportLog(type);
+
+</code></pre><h3>5. on</h3>
+<pre class="prettyprint language-javascript"><code>mdebug.on(eventName, callback);
+</code></pre><h3>6. emit</h3>
+<pre class="prettyprint language-javascript"><code>mdebug.emit(eventName, data);
+</code></pre><h2>七、事件列表</h2>
+<table>
+<thead>
+<tr>
+<th><strong>事件名称</strong></th>
+<th><strong>数据</strong></th>
+<th><strong>触发时机</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ready</td>
+<td>object</td>
+<td>mdebug加载完毕</td>
+</tr>
+<tr>
+<td>addTab</td>
+<td>object</td>
+<td>增加面板</td>
+</tr>
+<tr>
+<td>removeTab</td>
+<td>array</td>
+<td>移除面板</td>
+</tr>
+<tr>
+<td>changeTab</td>
+<td>object</td>
+<td>面板切换</td>
+</tr>
+</tbody>
+</table>
+<h2>八、开发</h2>
+<ol>
+<li>npm i</li>
+<li>npm start   // 启动开发</li>
+<li>npm run build  //打包</li>
+<li>npm run test // 单元测试</li>
+</ol>
+<h2>九、相关文章</h2>
+<ol>
+<li><a href="https://www.cnblogs.com/yzg1/p/5160594.html?utm_source=tuicool&amp;utm_medium=referral">移动端前端开发调试</a></li>
+<li><a href="https://developers.google.com/web/tools/chrome-devtools/">Chrome 开发者工具</a></li>
+</ol>
+<h2>十、相关项目</h2>
+<ol>
+<li><a href="https://github.com/liriliri/eruda">eruda</a></li>
+<li><a href="https://github.com/Tencent/vConsole">vConsole</a></li>
+<li><a href="https://github.com/alexkuz/react-json-tree">react-json-tree</a></li>
+<li><a href="https://github.com/abell123456/mdebug">基于React的移动端调试解决方案</a></li>
+<li><a href="https://github.com/ghking1/mdebug">a useful debugger for mobile</a></li>
+<li><a href="https://github.com/chokcoco/autoDevTools">autoDevTools</a></li>
+<li><a href="https://github.com/xyc/react-inspector">react-inspector</a></li>
+<li><a href="https://github.com/whinc/web-console">web-console</a></li>
+<li><a href="https://github.com/ChromeDevTools/devtools-frontend">ChromeDevTools</a></li>
+</ol>
+</div>

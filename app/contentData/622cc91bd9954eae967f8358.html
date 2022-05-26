@@ -1,0 +1,176 @@
+<div class="markdown-text"><p><img src="https://user-images.githubusercontent.com/23253540/158014929-cefd5457-8452-4064-8d8b-f3486f1baedc.png" alt="images">
+原文地址: <a href="https://github.com/xiaoxiaojx/blog/issues/33">https://github.com/xiaoxiaojx/blog/issues/33</a></p>
+<h2>背景</h2>
+<p>服务端渲染的项目本地模拟线上环境运行报了如下的一个错误，然而本地开发模式运行和真实的线上生产模式运行均没有问题。当听到这个问题描述时，我只觉得这个临床表现透露着诡异的氛围 😢</p>
+<blockquote>
+<p>本地模拟线上环境是先构建出生产模式的代码，然后运行 SSR Server 。其目的是更接近真实的线上生产环境的效果, 通常用于复现与 debug 线上环境出现的问题。</p>
+</blockquote>
+<pre class="prettyprint language-html"><code>&#x2F;&#x2F; 错误信息
+
+Invariant Violation: You should not use &lt;Switch&gt; outside a &lt;Router&gt;
+</code></pre><h2>问题简述</h2>
+<p>上面的错误信息造成原因通常有两个</p>
+<ol>
+<li>Switch 组件的上层没有 Router 组件，解决办法是使用基于 Router 组件的 BrowserRouter 组件或 HashRouter 组件作为 Switch 的父组件</li>
+</ol>
+<blockquote>
+<p>服务端运行使用的其实是 StaticRouter, 服务端渲染的是一个请求 path 的页面快照, 不存在客户端路由会切换的情况</p>
+</blockquote>
+<ol>
+<li>node_modules 中 react-router 有多个版本，解决办法是收拢依赖，只能允许一个版本</li>
+</ol>
+<blockquote>
+<p>如果 react-router 有多个版本, 使用 Router 组件的 RouterContext 与使用 Switch 组件的 RouterContext 将会是在两个版本的文件中，造成 RouterContext 不是同一个引用，平时这一点较难发现</p>
+</blockquote>
+<p>熟悉 React 的同学应该知道, 子组件要能从 RouterContext.Consumer 中获取到父组件 RouterContext.Provider 注入的数据， 其 RouterContext 必须是同一个对象才行</p>
+<p>如下 react-router 的代码, 说明了 Switch 组件是需要从 Router 组件获取必要的 context 信息, context 不存在则抛错</p>
+<pre class="prettyprint language-js"><code>&#x2F;&#x2F; react-router
+
+class Router extends React.Component {
+
+  render() {
+    return (
+      &lt;RouterContext.Provider
+        value={{
+          history: this.props.history,
+          location: this.state.location,
+          match: Router.computeRootMatch(this.state.location.pathname),
+          staticContext: this.props.staticContext
+        }}
+      &gt;
+        &lt;HistoryContext.Provider
+          children={this.props.children || null}
+          value={this.props.history}
+        &#x2F;&gt;
+      &lt;&#x2F;RouterContext.Provider&gt;
+    );
+  }
+}
+
+class Switch extends React.Component {
+  render() {
+    return (
+      &lt;RouterContext.Consumer&gt;
+        {context =&gt; {
+          &#x2F;&#x2F; 抛错处 👇
+          invariant(context, &quot;You should not use &lt;Switch&gt; outside a &lt;Router&gt;&quot;);
+
+          const location = this.props.location || context.location;
+
+          let element, match;
+
+          &#x2F;&#x2F; We use React.Children.forEach instead of React.Children.toArray().find()
+          &#x2F;&#x2F; here because toArray adds keys to all child elements and we do not want
+          &#x2F;&#x2F; to trigger an unmount&#x2F;remount for two &lt;Route&gt;s that render the same
+          &#x2F;&#x2F; component at different URLs.
+          React.Children.forEach(this.props.children, child =&gt; {
+            if (match == null &amp;&amp; React.isValidElement(child)) {
+              element = child;
+
+              const path = child.props.path || child.props.from;
+
+              match = path
+                ? matchPath(location.pathname, { ...child.props, path })
+                : context.match;
+            }
+          });
+
+          return match
+            ? React.cloneElement(element, { location, computedMatch: match })
+            : null;
+        }}
+      &lt;&#x2F;RouterContext.Consumer&gt;
+    );
+  }
+}
+</code></pre><h2>问题排查</h2>
+<h3>1. 确认 RouterContext 是同一个引用</h3>
+<p>从 yarn.lock 文件看出 react-router 确实只有一个版本，不过仍然存在 node_modules 文件缓存没有删除成功，导致残留了旧版本的可能性。此时我们需要分别在 Router 和 Switch render 时加上 debugger, 确认代码运行时 RouterContext.Provider 与 RouterContext.Consumer 是同一个 RouterContext 引用</p>
+<p>通过 debugger 断点也确认了 RouterContext 是同一个引用, 那么子组件通过 Consumer 仍然拿不到 context 岂不是 React 的 bug ?</p>
+<pre class="prettyprint language-js"><code>&#x2F;&#x2F; react-router
+
+class Switch extends React.Component {
+  render() {
+    return (
+      &lt;RouterContext.Consumer&gt;
+        {context =&gt; {
+          &#x2F;&#x2F; 抛错处 👇
+          invariant(context, &quot;You should not use &lt;Switch&gt; outside a &lt;Router&gt;&quot;);
+
+		  &#x2F;&#x2F; ...
+      &lt;&#x2F;RouterContext.Consumer&gt;
+    );
+  }
+}
+</code></pre><h3>2. React 的 bug ?</h3>
+<p>此时我们还不能确认是 React 的 bug, 要先摆脱 react-router 的嫌疑。写了如下的 demo, 发现 console.log 依然没有值，不过把 demo 复制到相同 react 版本的另一个 SSR 项目中 console.log 是有值的，得出不是 React 的 bug</p>
+<pre class="prettyprint language-js"><code>import React from &#x27;react&#x27;
+
+const MyRouterContext = React.createContext({})
+
+function App() {
+  return (
+    &lt;MyRouterContext.Provider value={{ test: 1 }}&gt;
+      &lt;MyRouterContext.Consumer&gt;
+        {(ctx) =&gt; {
+          console.log(ctx)
+          return 11111
+        }}
+      &lt;&#x2F;MyRouterContext.Consumer&gt;
+    &lt;&#x2F;MyRouterContext.Provider&gt;
+  )
+}
+</code></pre><p>排查了一圈下来发现大家都是被冤枉的 😢</p>
+<ul>
+<li>react 和 react-router 没有问题</li>
+<li>本地开发模式运行和真实的线上生产模式运行也没有问题</li>
+</ul>
+<h3>3. 对比关键信息的异同</h3>
+<p>最后只能和正常能运行的 SSR 项目来进行不同了，排查重点在于</p>
+<ol>
+<li>package.json 中的依赖</li>
+<li>脚手架配置文件的配置信息</li>
+</ol>
+<p>在一阵对比后, 还是发现了关键的信息。本地模拟线上环境运行的是下面的命令</p>
+<blockquote>
+<p>模拟线上 NODE_ENV 最好是应该设置成 production, 这里却设置成了 development</p>
+</blockquote>
+<pre class="prettyprint language-json"><code>    &quot;co-start&quot;: &quot;yarn build &amp;&amp; NODE_ENV=development DOCKER=true yarn start&quot;
+</code></pre><p>生产环境 yarn build 打包后，代码开始按如下顺序运行</p>
+<ol>
+<li>读取脚手架配置文件的配置信息</li>
+<li>创建 SSR Server 实例
+<ul>
+<li>一些初始化操作, 生产模式运行会强制初始化 NODE_ENV 为 production</li>
+<li>创建实例, 开始监听端口</li>
+</ul>
+</li>
+</ol>
+<p>在步骤1中, NODE_ENV 是 co-start 命令设置的 development, 该配置文件 import 了一个包 packageA, packageA 下某个包又 import 了 react , 所以此时 Node.js 缓存住了 react  模块, 其值为 development 环境的 ./cjs/react.development.js 的模块导出</p>
+<pre class="prettyprint"><code>&#x2F;&#x2F; react&#x2F;index.js
+
+&#x27;use strict&#x27;;
+
+if (process.env.NODE_ENV === &#x27;production&#x27;) {
+  module.exports = require(&#x27;.&#x2F;cjs&#x2F;react.production.min.js&#x27;);
+} else {
+  module.exports = require(&#x27;.&#x2F;cjs&#x2F;react.development.js&#x27;);
+}
+</code></pre><p>在步骤 2 中, 判断此时是生产模式运行就强制初始化 NODE_ENV 为 production, 使得后面运行的 import { renderToString } from ‘react-dom/server’ 部分的代码, react-dom 的值为 production 环境下 ./cjs/react-dom-server.node.production.min.js 的模块导出</p>
+<p><strong><em>react 和 react-dom 一个使用的是开发版本, 一个使用的是生产版本</em></strong></p>
+<p>此时我们篡改 node_modules 中 react-dom 与 react 的代码, 统一替换 process.env.NODE_ENV === ‘production’ 为 true 或者 false, 使得 react-dom 与 react 引用环境保持一致, 发现一切就能正常运行了 ✅</p>
+<pre class="prettyprint"><code>&#x2F;&#x2F; react-dom&#x2F;server.node.js
+
+&#x27;use strict&#x27;;
+
+if (process.env.NODE_ENV === &#x27;production&#x27;) {
+  module.exports = require(&#x27;.&#x2F;cjs&#x2F;react-dom-server.node.production.min.js&#x27;);
+} else {
+  module.exports = require(&#x27;.&#x2F;cjs&#x2F;react-dom-server.node.development.js&#x27;);
+}
+</code></pre><h2>小结</h2>
+<blockquote>
+<p>版本信息: react@16.14.0 react-dom@16.14.0 node@12.20.1</p>
+</blockquote>
+<p>运行 react 与 react-dom 时的 process.env.NODE_ENV 的值不一致将会导致服务端渲染时 Consumer 组件拿不到 Provider 组件透传下来的 Context</p>
+</div>

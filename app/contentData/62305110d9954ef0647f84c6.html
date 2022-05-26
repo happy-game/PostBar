@@ -1,0 +1,39 @@
+<div class="markdown-text"><p>最近我在负责<a href="https://www.thegospelcoalition.org/">福音联盟</a>外包给中国团队的一个独立站的开发。我这边负责开发，美国同事负责提供服务器资源，他们中国机构的负责人（PM）负责验收功能，其它地区的编辑负责录入内容。项目的架构主要有三个独立的服务组成：</p>
+<ul>
+<li>WordPress：作为内容管理后台，给编辑们发布文章提供内容；</li>
+<li>数据库：Mysql数据库，两个服务都访问同一个数据库，WordPress主要负责写，官网负责读。</li>
+<li>独立官网：展示内容，因为定制需求比较多，所以使用Java（Spring Boot + Thymeleaf）独立开发；
+<img src="//static.cnodejs.org/FlrFV-juyR9mH4qXVp1k06augsdm" alt="+1.png">
+大家平时沟通基本都是邮件，申请测试服务器的流程太长太耗时，所以一开始我只申请了开通链接测试数据的权限，在自己电脑上开发。然而。。。离上线还有两天，刚拿到公司的新MacBook，就接到紧急出差北京的任务，这来回十几个小时，可不能浪费，不然就悲催地delay了…
+我打算利用路上的时间，赶完最后的开发和联调。目前我自己的部分已经完成，进入了联调和验收阶段，但是在新MacBook上需要下载软件、配置开发环境、构建依赖等，网速怕是不够稳，时间也来不及。自己平时也关注云原生领域，记得有些协作开发工具，或许可以很快地解决问题。</li>
+</ul>
+<p>首先，我用<a href="https://www.teamcode.com/products/pylon">Pylon</a>解决了写代码之前准备工作。
+打开笔记本，用手机热点连上网，登录TeamCode（<a href="http://www.teamcode.com">www.teamcode.com</a>)，点击创建Pylon，授权和输入Git仓库地址后，5秒钟左右创建了Java项目的开发环境，相当于给了一台虚拟的Linux机器（我选了默认的1核2G），并把代码Pull下来。
+<img src="//static.cnodejs.org/FkpZN-vUU2WOWNqU8YNJ7krtjEYK" alt="T+P2.png">
+<img src="//static.cnodejs.org/FpzknsPKgDIAOf-PCd6CQC-8q5qu" alt="+3.png">
+Pylon也许是检测到我的项目是Java，默认装好了Git和Maven，它支持VSCode链接和Cloud-IDE直接编码。因为目前基础业务和样式我都开发完了，只是做些微调和修复bug，所以不下载IDE也可以，我就直接用Cloud-IDE打开了。
+<img src="//static.cnodejs.org/FusdffiLopnMMJIw40rwSrI_2lWW" alt="+4.png">
+<img src="//static.cnodejs.org/Fu4Iu_5itbz_1Oz5mzDo7jPc5cfU" alt="+5.png">
+打开后还需要先mvn install构建一次才能启动，我一开始还担心要构建的话需要下载不少依赖，根据之前的经验，起码也得20分钟，我这手机热点恐怕扛不住，后来才意识到这不是一台远程机器吗？用的是服务器的网络和算力，和我本地无关，哈哈…输完命令看到开始下载依赖，我就合上笔记本就开始检票上车了，虽然和我想的一样，到了位置上已经构建成功，一切都准备就绪了，但我还是小激动了一把，启动服务后，在高铁上花了2个小时修完了所有的bug，但现在是怎么让PM验收，我还没申请服务器，更别说配置Jenkins了。</p>
+<p>然后，用Tin快速发布了一个应用，解决采购测服和部署的工作。
+那就再用他们的Tin产品来封装和发布。这是一个应用封装的产品，反正PM只看效果也不改代码，我就把刚才的修改提交到Git仓库，然后给PM创建了一个Tin。
+<img src="//static.cnodejs.org/Fv_sWNi_Yv7l5DHimrp-EAu3RwMt" alt="+6.png">
+<img src="//static.cnodejs.org/FnBXwIYLo-D2oEIx81hhI6GBRNig" alt="+7.png">
+<img src="//static.cnodejs.org/FtL40Un9zhHrXCGNJ4HzpWcSBpGP" alt="+8.png">
+我自己启动Tin并验证没问题后，通过发了个邀请链接给他，告诉他只需要加入我的工作空间，点击这个Tin的Endpoint就可以访问，Tin还可以Upgrade，待会我如果再做修改也可以快速的重新部署。
+<img src="//static.cnodejs.org/FkmWuDRatjS-E3iQqGat3Jy3-IvV" alt="+9.png">
+邮件发好后正好快到站了，赶紧休息一会儿，就等他反馈吧。</p>
+<p>小插曲
+和之前我预想的一样，PM通过Tin快速体验和提Issues，我在云上用Cloud-IDE + Pylon开发修复，邮件几次来回后，基本都验收完了，安心的度过了第一晚。
+第二天忙完已经是下午5:00，正赶回上海高铁，又突然给我发了一个bug，刚发现某个页面的JS的一个方法和全局的方法冲突了，导致打不开！！！这离下班发版还有1个小时，我在地铁上没位置，站着根本写不了代码，哪里有时间修复，要是让大家因为我加班发版，这…眼看又要Delay了，我就想让公司前端帮帮忙，于是厚着脸皮给他发了个邀请链接，微信上“强迫”他赶紧加入我的工作空间，答应请他吃一顿大餐作为回报，告诉他不用配环境、不用构建，直接可以改，才说动了他。接着就语音教他启动Pylon，Cloud-IDE打开就开始改了。
+<img src="//static.cnodejs.org/FuSewfij0t0Wqs0g2aQJ20AOcjuD" alt="+10.png">
+<img src="//static.cnodejs.org/Fnq3xDrAH_SjWCS4LoEDvh7vXv7T" alt="+11.png">
+<img src="//static.cnodejs.org/Fu_WzsmVL4N0YiuUPtec_Bt-cTVl" alt="+12.png">
+他水平还是不错的，10分钟帮我搞定了。然后我更新了Tin应用，让PM验收，最后顺利的在6点钟发版了。</p>
+<p>总结
+出差两天让我完整体验了一次云端协作开发，最重要的是按时交付了工作，周末可以不用加班了。总结一下，我觉TeamCode的产品在这几个场景上可以帮助到大家：
+1.需要比较灵活的开发模式，例如更换设备，在出差、家里公司不停切换场地时可以用Cloud-IDE +Pylon，因为资源在云上，免环境配置，让开发变得很灵活，可以第一时间进入开发状态；
+2.快速的封装和部署，例如快速验收功能，做DEMO演示，技术交流，让对方快速POC等，可以用Tin帮助你部署，给对方使用，我这次就用来给PM快速验收，省去了采购测试服务器的费用和时间；
+3.需要多人协同开发，例如找人帮你找出或解决bug，跨时区、地区协同开发又没有7x24的运维团队时，可以在TeamCode上按照自己的节奏启动和调用服务，大部分运维工作都已经自动化了。</p>
+<p>感谢你读到这里，欢迎留言交流，如果对你有用的话可以给个赞支持或者转发！</p>
+</div>

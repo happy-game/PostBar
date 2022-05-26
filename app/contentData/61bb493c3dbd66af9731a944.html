@@ -1,0 +1,51 @@
+<div class="markdown-text"><pre class="prettyprint language-js"><code>
+&#x2F;&#x2F; 通过 调用 Object.prototype, &quot;set __proto__&quot; 可以增加原型链,
+&#x2F;&#x2F; 可以通过调用 Object.defineProperty 设置扩展的key:&quot;base&quot;
+&#x2F;&#x2F; 并且该原型链会增加到__proto__, 可以被Object.getPrototypeOf 获取
+&#x2F;&#x2F; 然后 __proto__|base 设置为空时, 你扩展的属性[base]也会被设置为空 []
+&#x2F;&#x2F; 另外获取到的 __proto__ 是undefined,getPrototypeOf 是null
+&#x2F;&#x2F; &#x2F;&#x2F;  原型链不能被delete,但是可以被 设置为空,
+var d = { __proto__: null }
+
+&#x2F;&#x2F; Object.setPrototypeOf(d, Array);
+var proto = Object.getOwnPropertyDescriptor(Object.prototype, &quot;__proto__&quot;)
+console.log(proto);
+proto.configurable = false
+
+Object.defineProperty(d, &quot;base&quot;, proto);
+&#x2F;&#x2F; Reflect.defineProperty(d, &quot;base&quot;, proto);
+
+console.log(&quot;after defineProperty|\n __proto__&quot;, d.__proto__);
+
+
+d.base = Object.prototype
+
+console.log(&quot;set key [base]\n getPrototypeOf&quot;, Object.getPrototypeOf(d))
+console.log(&quot;__proto__&quot;, d.__proto__);
+
+function test1() {
+    &#x2F;&#x2F; delete d.__proto__;
+    console.log(&quot;del __proto__ fail&quot;, d.__proto__);
+    d.__proto__ = null;
+    &#x2F;&#x2F;  设置为空
+    console.log(&quot;delete d.__proto__&quot;)
+
+    console.log(&quot;__proto__&quot;, d.__proto__);
+
+    &#x2F;&#x2F; console.log(&quot;base:&quot;, d.base)
+    console.log(&quot;getPrototypeOf [c]&quot;, Object.getPrototypeOf(d))
+}
+function test2() {
+    delete d.base;
+    &#x2F;&#x2F; console.log(&quot;del base fail&quot;, d.base);
+    d.base = null;
+    &#x2F;&#x2F;  设置为空
+    console.log(&quot;delete d.base&quot;)
+    console.log(&quot;__proto__&quot;, d.__proto__);
+    &#x2F;&#x2F; console.log(&quot;base:&quot;, d.base)
+    console.log(&quot;getPrototypeOf [c]&quot;, Object.getPrototypeOf(d))
+}
+test1();
+&#x2F;&#x2F; test2();
+</code></pre><p>定义的越多，越难以自洽</p>
+</div>
