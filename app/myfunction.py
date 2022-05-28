@@ -9,6 +9,16 @@ import re
 import string
 import traceback
 
+host='101.35.29.201',
+user='root',
+password='0nishishabi.',
+database='mydb'
+def connectdb():
+    db = pymysql.connect(host='101.35.29.201',
+                         user='root',
+                         password='0nishishabi.',
+                         database='mydb')
+    return db,db.cursor()
 def generate_random_str(randomlength=24):
     """
     生成一个指定长度的随机字符串，其中
@@ -57,10 +67,12 @@ def match(name,password):       # 根据账号密码查询是否匹配，如果�
     # 使用cursor()方法获取操作游标
     cursor = db.cursor()
     # TODO 防注入未完成
-    sql = "SELECT name,password FROM Users WHERE name = '%s' AND password = '%s' "%(name, password)
+    sql = "SELECT name,password,privilege FROM Users WHERE name = '%s' AND password = '%s' "%(name, password)
     cursor.execute(sql)
     results = cursor.fetchone()
-    return results != None
+    if results !=None:
+        return results[2]
+    return -1
 
 def addPost(markdownText, payload):    # 添加帖子,源格式为markdown转换为html文件,payload为解密后的token
     # 打开数据库连接
@@ -106,12 +118,14 @@ def addPost(markdownText, payload):    # 添加帖子,源格式为markdown转换
         # 执行sql语句
         db.commit()
         # print('%s success'%sql)
+        return id
     except:
         # 发生错误时回滚
         print(traceback.format_exc())
         print('error : %s' % sql)
         db.rollback()
-    return id
+        return 'error'
+    # return id
 
 def addReply(markdownText,postID, payload):    # 添加帖子,源格式为markdown转换为html文件,payload为解密后的token
     # 打开数据库连接
@@ -146,7 +160,7 @@ def addReply(markdownText,postID, payload):    # 添加帖子,源格式为markdo
     # print(payload['name'])
     uid = cursor.fetchone()[0]      # 获取用户名对应id
     # print(uid)
-    datapath = '%s%s.html'%(path,id)
+    datapath = 'app/commentData/%s.html'%(id)
     sql = "INSERT INTO Comments(CommentID,postID, \
                userID, comment, Time) \
                VALUES ('%s', '%s',  '%s',  '%s', '%s')" % \
@@ -158,18 +172,72 @@ def addReply(markdownText,postID, payload):    # 添加帖子,源格式为markdo
         # 执行sql语句
         db.commit()
         # print('%s success'%sql)
+        return id
     except:
         # 发生错误时回滚
         print(traceback.format_exc())
         print('error : %s' % sql)
         db.rollback()
-    return id
+        return '请附带正确的帖子id访问'
+    # return id
 # def queryPostList(page):
 #     pass
 # def queryPost(postID):
 #     pass
 
+def addUser(name,password):
+    db = pymysql.connect(host='101.35.29.201',
+                         user='root',
+                         password='0nishishabi.',
+                         database='mydb')
 
+    # 使用cursor()方法获取操作游标
+    cursor = db.cursor()
+    # id = generate_random_str(24)        # 随机生成id
+    sql = "SELECT name FROM Users WHERE name='%s' "%(name)
+    cursor.execute(sql)
+    results = cursor.fetchone()
+    if(results != None):
+        return '注册失败，用户名已经存在'
+    id = generate_random_str(24)        # 随机生成id
+    # while(results != None):     # 确保id不重复
+    #     id = generate_random_str(24)        # 随机生成id
+    #     sql = "SELECT postID FROM Posts WHERE postID='%s' "%(id)
+    #     cursor.execute(sql)
+    #     results = cursor.fetchone()
+
+    #  转换markdown 获取path和title
+    # pwd = '/home/ubuntu/code-server/dd/app'     # 当前目录
+    # path = '%s/contentData/'%pwd
+    # mytime = time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time()))   #  获取时间
+    # html = markdown.markdown(markdownText)
+    # title = re.findall("h1>(.*?)<",html)[0]        # 正则匹配标题
+    # with open('%s%s.html'%(path,id),'w',encoding='utf-8') as f:     # 帖子内容转化为html写入文件
+    #     f.write(html)
+    # sql = "SELECT name,userID FROM Users WHERE name = '%s' "%(payload['name'])
+    # cursor.execute(sql)
+    # uid = cursor.fetchone()[1]      # 获取用户名对应id
+    
+    # datapath = '%s%s.html'%(path,id)        # FIXME
+    sql = "INSERT INTO Users(userID, \
+               name, password, privilege) \
+               VALUES ('%s', '%s',  '%s',  '%s',  %d, '%s')" % \
+              (id, name, password, 1)
+    
+    try:
+        # 执行sql语句
+        cursor.execute(sql)
+        # 执行sql语句
+        db.commit()
+        # print('%s success'%sql)
+        return name
+    except:
+        # 发生错误时回滚
+        print(traceback.format_exc())
+        print('error : %s' % sql)
+        db.rollback()
+        return 'error'
+    # return id
 
 #请求帖子页面
 def queryPost(postID):

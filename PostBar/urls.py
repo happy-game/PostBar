@@ -30,5 +30,6 @@ urlpatterns = [
     path('delpost/',views.delpost),
     path('delreply/', views.delreply),
     path('logout/',views.logout),
+    path('register/',views.register)
     # /#/index/post /#/index/sendpost /#/index/myinfo /#/index/search #/index/6262718079f90d94a6a0d2f5&auther=atian25 #/user/i5ting
 ]

@@ -42,18 +42,19 @@ def login(request):
 
         obj = hashlib.md5()     # md5加密
         # str='happy'
-        print(password)
+        # print(password)
         obj.update(password.encode("utf-8"))
         ciphertext_password = obj.hexdigest()
-        print(ciphertext_password)
+        # print(ciphertext_password)
         # print(ciphertext_str)
-
-        if(myfunction.match(name,ciphertext_password)):        # 去数据库查询
+        privilege = myfunction.match(name,ciphertext_password)
+        if(privilege != -1):        # 去数据库查询
             response = HttpResponse(
                 json.dumps(
                     {
                     'success':True,
-                    'username':name
+                    'username':name,
+                    'privilege':privilege
                 }
                 )
             )
@@ -78,7 +79,7 @@ def login(request):
 def postlist(request):
     if(request.META['REQUEST_METHOD'] == 'GET'):        # 去数据库查询对应id帖子信息并返回字典
         page = request.GET['page']
-        print(page)
+        # print(page)
         data = myfunction.queryPostList(int(page))
         ResponseData = {}
         ResponseData['success'] = True      # 请求成功
@@ -119,7 +120,7 @@ def sendpost(request):
         return HttpResponse('请用post访问', status = 405)
 
 def sendreply(request):
-    print(type(request.COOKIES))
+    # print(type(request.COOKIES))
     payload = myfunction.decodejwt(request.COOKIES.get('token'))
     if payload == None :
         return HttpResponse(
@@ -131,7 +132,7 @@ def sendreply(request):
             )
         )
     if(request.META['REQUEST_METHOD'] == 'POST'):
-        print(request.POST.get('postID'))
+        # print(request.POST.get('postID'))
         id = myfunction.addReply(request.POST.get('value'),request.POST.get('postID'), payload)
         return HttpResponse(
             json.dumps(
@@ -157,8 +158,8 @@ def myinfo(request):        # 获取用户信息
     #         )
     #     )
     if(request.META['REQUEST_METHOD'] == 'GET'):
-        page = request.GET['name']
-        print(page)
+        name = request.GET['name']
+        # print(page)
         data = myfunction.getUserInfo(name)
         ResponseData = {}
         ResponseData['success'] = True      # 请求成功
@@ -170,6 +171,7 @@ def myinfo(request):        # 获取用户信息
                 }
             ))
         ResponseData['data'] = data
+        # return HttpResponse(status = 1)
         return HttpResponse(json.dumps(data))
     else:
         return HttpResponse('请用post访问', status = 405)
@@ -187,8 +189,8 @@ def search(request):
         )
     if(request.META['REQUEST_METHOD'] == 'POST'):
         name = request.POST.get('name')
-        start = request.POST.get('start')
-        end = request.POST.get('end')
+        start = request.POST.get('start')+' 00:00:00'
+        end = request.POST.get('end')+' 00:00:00'
         data = myfunction.searchPost(name, start, end)       # 根据用户名，起止时间去查询
         return HttpResponse(
             json.dumps({
@@ -297,5 +299,48 @@ def logout(request):        # 登出，会将cookies设置为无意义
         response.set_cookie('token', 'null')  # 登出成功改变cookies
         return response
 
+    else:
+        return HttpResponse('请用post访问', status = 405)
+
+def register(request):
+    if(request.META['REQUEST_METHOD'] == 'POST'):
+        # print(request.POST)
+        name = request.POST['name']
+        password = request.POST['password']
+
+        obj = hashlib.md5()     # md5加密
+        # str='happy'
+        # print(password)
+        obj.update(password.encode("utf-8"))
+        ciphertext_password = obj.hexdigest()
+        # print(ciphertext_password)
+        # print(ciphertext_str)
+        result = myfunction.addUser(name,ciphertext_password)
+        if(result==True):        # 去数据库查询
+            response = HttpResponse(
+                json.dumps(
+                    {
+                    'success':True,
+                    'username':name
+                    # 'result':result
+                }
+                )
+            )
+            payload={
+                'name':name,
+                'password':password
+            }
+            myjwt = myfunction.getjwt(payload)
+            response.set_cookie('token', myjwt)  # 登录成功改变cookies
+            return response
+        else:
+            return HttpResponse(
+                json.dumps(
+                    {
+                    'success':False,     # 登录失败
+                    'result':result
+                }
+                )
+            )
     else:
         return HttpResponse('请用post访问', status = 405)
