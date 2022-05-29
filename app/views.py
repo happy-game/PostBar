@@ -25,6 +25,10 @@ def test(request):
     jss = json.dumps(data)
     return HttpResponse(jss)
 
+def getMd5(str):
+    obj = hashlib.md5()     # md5加密
+    obj.update(str.encode("utf-8"))
+    return obj.hexdigest()
 
 # path('admin/', admin.site.urls),
 # path('/#/login', views.login),
@@ -40,11 +44,8 @@ def login(request):
         name = request.POST['name']
         password = request.POST['password']
 
-        obj = hashlib.md5()     # md5加密
-        # str='happy'
-        # print(password)
-        obj.update(password.encode("utf-8"))
-        ciphertext_password = obj.hexdigest()
+
+        ciphertext_password = getMd5(password)
         # print(ciphertext_password)
         # print(ciphertext_str)
         privilege = myfunction.match(name,ciphertext_password)
@@ -77,6 +78,16 @@ def login(request):
         return HttpResponse('请用post访问', status = 405)
 
 def postlist(request):
+    payload = myfunction.decodejwt(request.COOKIES.get('token'))
+    if payload == None :
+        return HttpResponse(
+            json.dumps(
+                {
+                'success':True,
+                'data':'登陆过期'
+            }
+            )
+        )
     if(request.META['REQUEST_METHOD'] == 'GET'):        # 去数据库查询对应id帖子信息并返回字典
         page = request.GET['page']
         # print(page)
@@ -145,8 +156,8 @@ def sendreply(request):
     else:
         return HttpResponse('请用post访问', status = 405)
 
-
 def myinfo(request):        # 获取用户信息
+    # print('test')
     # payload = myfunction.decodejwt(request.COOKIES.get('token'))
     # if payload == None :
     #     return HttpResponse(
@@ -158,11 +169,12 @@ def myinfo(request):        # 获取用户信息
     #         )
     #     )
     if(request.META['REQUEST_METHOD'] == 'GET'):
+        # print('test')
         name = request.GET['name']
         # print(page)
         data = myfunction.getUserInfo(name)
-        ResponseData = {}
-        ResponseData['success'] = True      # 请求成功
+        # ResponseData = {}
+        # ResponseData['success'] = True      # 请求成功
         if data == None:
             return HttpResponse(json.dumps(
                 {
@@ -170,8 +182,10 @@ def myinfo(request):        # 获取用户信息
                     'data':'Not Found'
                 }
             ))
-        ResponseData['data'] = data
+        # ResponseData['data'] = data
         # return HttpResponse(status = 1)
+        # print(data)
+        # return HttpResponse(status = 100)
         return HttpResponse(json.dumps(data))
     else:
         return HttpResponse('请用post访问', status = 405)
@@ -183,7 +197,7 @@ def search(request):
             json.dumps(
                 {
                 'success':True,
-                'data':None
+                'data':'登陆过期'
             }
             )
         )
@@ -203,6 +217,16 @@ def search(request):
         return HttpResponse('请用post访问', status = 405)
 
 def getpost(request):
+    payload = myfunction.decodejwt(request.COOKIES.get('token'))
+    if payload == None :
+        return HttpResponse(
+            json.dumps(
+                {
+                'success':True,
+                'data':'登陆过期'
+            }
+            )
+        )
     if(request.META['REQUEST_METHOD'] == 'GET'):        # 去数据库查询对应id帖子信息并返回字典
         postID = request.GET['id']
         data = myfunction.queryPost(postID)
@@ -308,13 +332,7 @@ def register(request):
         name = request.POST['name']
         password = request.POST['password']
 
-        obj = hashlib.md5()     # md5加密
-        # str='happy'
-        # print(password)
-        obj.update(password.encode("utf-8"))
-        ciphertext_password = obj.hexdigest()
-        # print(ciphertext_password)
-        # print(ciphertext_str)
+        ciphertext_password = getMd5(password)
         result = myfunction.addUser(name,ciphertext_password)
         if(result==True):        # 去数据库查询
             response = HttpResponse(
@@ -339,6 +357,62 @@ def register(request):
                     {
                     'success':False,     # 登录失败
                     'result':result
+                }
+                )
+            )
+    else:
+        return HttpResponse('请用post访问', status = 405)
+
+def updatePassword(request):
+    if(request.META['REQUEST_METHOD'] == 'POST'):
+        # print(request.POST)
+        name = request.POST['name']
+        old = request.POST['old']
+        new = request.POST['new']
+        if (old == new):
+            return HttpResponse(
+                json.dumps(
+                    {
+                    'success':False,
+                    'data': '新密码不能和旧密码相同'
+                }
+                )
+            )
+        ciphertext_old = getMd5(old)
+        ciphertext_new = getMd5(new)
+
+        privilege = myfunction.match(name,ciphertext_old)
+        if(privilege != -1):        # 去数据库查询
+            response = HttpResponse(
+                json.dumps(
+                    {
+                    'success':True,
+                    'username':name,
+                    'privilege':privilege
+                }
+                )
+            )
+            if(myfunction.updatePassword(name, ciphertext_old, ciphertext_new)):
+                payload={
+                    'name':name,
+                    'password':new
+                }
+                myjwt = myfunction.getjwt(payload)
+                response.set_cookie('token', myjwt)  # 登录成功改变cookies
+                return response
+            else:
+                return HttpResponse(json.dumps(
+                    {
+                        'success':False,
+                        'data':'更新密码失败'
+                    }
+                ))
+        else:
+            return HttpResponse(
+                json.dumps(
+                    {
+                    'success':False,     # 登录失败
+                    'data':'旧密码输入错误'
                 }
                 )
             )

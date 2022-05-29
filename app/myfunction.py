@@ -9,16 +9,13 @@ import re
 import string
 import traceback
 
-host='101.35.29.201',
-user='root',
-password='0nishishabi.',
-database='mydb'
 def connectdb():
     db = pymysql.connect(host='101.35.29.201',
                          user='root',
                          password='0nishishabi.',
                          database='mydb')
     return db,db.cursor()
+
 def generate_random_str(randomlength=24):
     """
     生成一个指定长度的随机字符串，其中
@@ -37,8 +34,9 @@ def getjwt(payload):
     # 设置headers，即加密算法的配置
     salt = "asgfdgerher"
     # 随机的salt密钥，只有token生成者（同时也是校验者）自己能有，用于校验生成的token是否合法
-    exp = int(time.time() + 1)      # 改
-    # 设置超时时间：当前时间的100s以后超时
+    expire = int(time.time() + 259200)      # 改
+    payload['exp']=expire       # 过期时间为3天
+    # 设置超时时间：当前时间的三天以后超时
     # payload = {
     # "name": "dawsonenjoy",
     # "exp": exp
@@ -47,25 +45,19 @@ def getjwt(payload):
     # 当然也可以将敏感信息加密后再放进payload
 
     return jwt.encode(payload=payload, key=salt, algorithm='HS256', headers=headers).decode('utf-8')
+
 def decodejwt(token):
     salt = "asgfdgerher"
     try:
         info = jwt.decode(token, salt, True, algorithm='HS256')
     except:
         return None
-    # 解码token，第二个参数用于校验
-    # 第三个参数代表是否校验，如果设置为False，那么只要有token，就能够对其进行解码
+    # 解码token
     return info
 
-def match(name,password):       # 根据账号密码查询是否匹配，如果正确则返回True
+def match(name,password):       # 根据账号密码查询是否匹配，返回用户权限等级
     # 打开数据库连接
-    db = pymysql.connect(host='101.35.29.201',
-                         user='root',
-                         password='0nishishabi.',
-                         database='mydb')
-
-    # 使用cursor()方法获取操作游标
-    cursor = db.cursor()
+    db, cursor = connectdb()
     # TODO 防注入未完成
     sql = "SELECT name,password,privilege FROM Users WHERE name = '%s' AND password = '%s' "%(name, password)
     cursor.execute(sql)
@@ -76,13 +68,7 @@ def match(name,password):       # 根据账号密码查询是否匹配，如果�
 
 def addPost(markdownText, payload):    # 添加帖子,源格式为markdown转换为html文件,payload为解密后的token
     # 打开数据库连接
-    db = pymysql.connect(host='101.35.29.201',
-                         user='root',
-                         password='0nishishabi.',
-                         database='mydb')
-
-    # 使用cursor()方法获取操作游标
-    cursor = db.cursor()
+    db, cursor = connectdb()
     id = generate_random_str(24)        # 随机生成id
     sql = "SELECT postID FROM Posts WHERE postID='%s' "%(id)
     cursor.execute(sql)
@@ -129,13 +115,7 @@ def addPost(markdownText, payload):    # 添加帖子,源格式为markdown转换
 
 def addReply(markdownText,postID, payload):    # 添加帖子,源格式为markdown转换为html文件,payload为解密后的token
     # 打开数据库连接
-    db = pymysql.connect(host='101.35.29.201',
-                         user='root',
-                         password='0nishishabi.',
-                         database='mydb')
-
-    # 使用cursor()方法获取操作游标
-    cursor = db.cursor()
+    db, cursor = connectdb()
     id = generate_random_str(24)        # 随机生成id
     sql = "SELECT commentID FROM Comments WHERE commentID='%s' "%(id)
     cursor.execute(sql)
@@ -151,8 +131,8 @@ def addReply(markdownText,postID, payload):    # 添加帖子,源格式为markdo
     pwd = '/home/ubuntu/code-server/dd/app'     # 当前目录
     path = '%s/commentData/'%pwd
     mytime = time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time()))   #  获取时间
-    html = markdown.markdown(markdownText)
-    # title = re.findall("h1>(.*?)<",html)        # 正则匹配标题
+    html = markdownText
+    
     with open('%s%s.html'%(path,id),'w',encoding='utf-8') as f:     # 帖子内容转化为html写入文件
         f.write(html)
     sql = "SELECT userID FROM Users WHERE name = '%s' "%(payload['name'])
@@ -186,13 +166,7 @@ def addReply(markdownText,postID, payload):    # 添加帖子,源格式为markdo
 #     pass
 
 def addUser(name,password):
-    db = pymysql.connect(host='101.35.29.201',
-                         user='root',
-                         password='0nishishabi.',
-                         database='mydb')
-
-    # 使用cursor()方法获取操作游标
-    cursor = db.cursor()
+    db, cursor = connectdb()
     # id = generate_random_str(24)        # 随机生成id
     sql = "SELECT name FROM Users WHERE name='%s' "%(name)
     cursor.execute(sql)
@@ -200,25 +174,7 @@ def addUser(name,password):
     if(results != None):
         return '注册失败，用户名已经存在'
     id = generate_random_str(24)        # 随机生成id
-    # while(results != None):     # 确保id不重复
-    #     id = generate_random_str(24)        # 随机生成id
-    #     sql = "SELECT postID FROM Posts WHERE postID='%s' "%(id)
-    #     cursor.execute(sql)
-    #     results = cursor.fetchone()
 
-    #  转换markdown 获取path和title
-    # pwd = '/home/ubuntu/code-server/dd/app'     # 当前目录
-    # path = '%s/contentData/'%pwd
-    # mytime = time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time()))   #  获取时间
-    # html = markdown.markdown(markdownText)
-    # title = re.findall("h1>(.*?)<",html)[0]        # 正则匹配标题
-    # with open('%s%s.html'%(path,id),'w',encoding='utf-8') as f:     # 帖子内容转化为html写入文件
-    #     f.write(html)
-    # sql = "SELECT name,userID FROM Users WHERE name = '%s' "%(payload['name'])
-    # cursor.execute(sql)
-    # uid = cursor.fetchone()[1]      # 获取用户名对应id
-    
-    # datapath = '%s%s.html'%(path,id)        # FIXME
     sql = "INSERT INTO Users(userID, \
                name, password, privilege) \
                VALUES ('%s', '%s',  '%s',  '%s',  %d, '%s')" % \
@@ -239,6 +195,23 @@ def addUser(name,password):
         return 'error'
     # return id
 
+def updatePassword(name, old, new):
+    db, cursor = connectdb()
+    sql = "UPDATE Users SET Users.password=%s WHERE name = %s AND password = %s;"
+    try:
+        # 执行sql语句
+        cursor.execute(sql,(new, name, old))
+        # 执行sql语句
+        db.commit()
+        # print('%s success'%sql)
+        return True
+    except:
+        # 发生错误时回滚
+        print(traceback.format_exc())
+        print('error : %s' % sql)
+        db.rollback()
+        return 'error'
+    pass
 #请求帖子页面
 def queryPost(postID):
     # searchId = "53916da9c3ee0b5820ffd30a";
@@ -250,7 +223,7 @@ def queryPost(postID):
     #找不到帖子返回None
     if resultNumber != 1:
         return None
-        # print("010?010.010!")
+
 
     allData = cursor.fetchall()
     #打开帖子内容的文件，将其读取
@@ -320,7 +293,6 @@ def queryPost(postID):
     #返回json格式字符串
     return json.dumps(waiForFormatting)
 
-
 def queryPostList(page):
     #处理获取起始页
     wantIndex = page * 20 - 20
@@ -386,7 +358,6 @@ def queryPostList(page):
     db.close()
     #返回json字符串
     return json.dumps(waiForFormatting)
-
 
 def delPost(deleteId, name):
     #deleteId = "53916da9c3ee0b5820ffd30a";
@@ -550,7 +521,7 @@ def searchPost(name, start, end):
     return json.dumps(waiForFormatting)
 
 def getUserInfo(name):
-    name='kingapple';
+    # name='kingapple'
     db = pymysql.connect(host='101.35.29.201', user='root', password='0nishishabi.', database='mydb')
     cursor = db.cursor()
     recentTopics = []
