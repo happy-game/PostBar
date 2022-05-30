@@ -8,6 +8,7 @@ import random
 import re
 import string
 import traceback
+from pymysql.converters import escape_string
 
 def connectdb():
     db = pymysql.connect(host='101.35.29.201',
@@ -55,10 +56,16 @@ def decodejwt(token):
     # 解码token
     return info
 
+def isBadSql(sql):
+    if('--' in sql or '#' in sql or 'OR' in sql or 'or' in sql):
+        return True
+    else:
+        return False
 def match(name,password):       # 根据账号密码查询是否匹配，返回用户权限等级
     # 打开数据库连接
     db, cursor = connectdb()
     # TODO 防注入未完成
+    name = escape_string(name)      # 防注入，预处理参数
     sql = "SELECT name,password,privilege FROM Users WHERE name = '%s' AND password = '%s' "%(name, password)
     cursor.execute(sql)
     results = cursor.fetchone()
@@ -77,26 +84,33 @@ def addPost(markdownText, payload):    # 添加帖子,源格式为markdown转换
     while(results != None):     # 确保id不重复
         id = generate_random_str(24)        # 随机生成id
         sql = "SELECT postID FROM Posts WHERE postID='%s' "%(id)
+        if(isBadSql(sql)):
+            return None
         cursor.execute(sql)
         results = cursor.fetchone()
 
     #  转换markdown 获取path和title
     pwd = '/home/ubuntu/code-server/dd/app'     # 当前目录
     path = '%s/contentData/'%pwd
+    print('%s%s.html'%(path,id))
     mytime = time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time()))   #  获取时间
     html = markdown.markdown(markdownText)
     title = re.findall("h1>(.*?)<",html)[0]        # 正则匹配标题
     with open('%s%s.html'%(path,id),'w',encoding='utf-8') as f:     # 帖子内容转化为html写入文件
         f.write(html)
     sql = "SELECT name,userID FROM Users WHERE name = '%s' "%(payload['name'])
+    if(isBadSql(sql)):
+        return None
     cursor.execute(sql)
     uid = cursor.fetchone()[1]      # 获取用户名对应id
     
-    datapath = '%s%s.html'%(path,id)        # FIXME
+    datapath = 'app/contentData/%s.html'%(id)       
     sql = "INSERT INTO Posts(postID, \
-               userID, path, title, visitCount, Time) \
-               VALUES ('%s', '%s',  '%s',  '%s',  %d, '%s')" % \
-              (id, uid, datapath, title, 0, mytime)
+               userID, path, title, visitCount, Time,lastReplyTime) \
+               VALUES ('%s', '%s',  '%s',  '%s',  %d, '%s','%s')" % \
+              (id, uid, datapath, title, 0, mytime,mytime)
+    if(isBadSql(sql)):
+        return None
     
     try:
         # 执行sql语句
@@ -117,13 +131,18 @@ def addReply(markdownText,postID, payload):    # 添加帖子,源格式为markdo
     # 打开数据库连接
     db, cursor = connectdb()
     id = generate_random_str(24)        # 随机生成id
+    postID = escape_string(postID)
     sql = "SELECT commentID FROM Comments WHERE commentID='%s' "%(id)
+    if(isBadSql(sql)):
+        return None
     cursor.execute(sql)
     results = cursor.fetchone()
 
     while(results != None):     # 确保id不重复
         id = generate_random_str(24)        # 随机生成id
         sql = "SELECT commentID FROM Comments WHERE commentID='%s' "%(id)
+        if(isBadSql(sql)):
+            return None
         cursor.execute(sql)
         results = cursor.fetchone()
 
@@ -136,6 +155,8 @@ def addReply(markdownText,postID, payload):    # 添加帖子,源格式为markdo
     with open('%s%s.html'%(path,id),'w',encoding='utf-8') as f:     # 帖子内容转化为html写入文件
         f.write(html)
     sql = "SELECT userID FROM Users WHERE name = '%s' "%(payload['name'])
+    if(isBadSql(sql)):
+        return None
     cursor.execute(sql)
     # print(payload['name'])
     uid = cursor.fetchone()[0]      # 获取用户名对应id
@@ -145,6 +166,8 @@ def addReply(markdownText,postID, payload):    # 添加帖子,源格式为markdo
                userID, comment, Time) \
                VALUES ('%s', '%s',  '%s',  '%s', '%s')" % \
               (id, postID, uid, datapath, mytime)
+    if(isBadSql(sql)):
+        return None
     
     try:
         # 执行sql语句
@@ -167,8 +190,11 @@ def addReply(markdownText,postID, payload):    # 添加帖子,源格式为markdo
 
 def addUser(name,password):
     db, cursor = connectdb()
+    name = escape_string(name)
     # id = generate_random_str(24)        # 随机生成id
     sql = "SELECT name FROM Users WHERE name='%s' "%(name)
+    if(isBadSql(sql)):
+        return None
     cursor.execute(sql)
     results = cursor.fetchone()
     if(results != None):
@@ -179,6 +205,8 @@ def addUser(name,password):
                name, password, privilege) \
                VALUES ('%s', '%s',  '%s',  '%s',  %d, '%s')" % \
               (id, name, password, 1)
+    if(isBadSql(sql)):
+        return None
     
     try:
         # 执行sql语句
@@ -197,7 +225,10 @@ def addUser(name,password):
 
 def updatePassword(name, old, new):
     db, cursor = connectdb()
+    name = escape_string(name)
     sql = "UPDATE Users SET Users.password=%s WHERE name = %s AND password = %s;"
+    if(isBadSql(sql)):
+        return None
     try:
         # 执行sql语句
         cursor.execute(sql,(new, name, old))
@@ -211,7 +242,7 @@ def updatePassword(name, old, new):
         print('error : %s' % sql)
         db.rollback()
         return 'error'
-    pass
+
 #请求帖子页面
 def queryPost(postID):
     # searchId = "53916da9c3ee0b5820ffd30a";
@@ -369,18 +400,20 @@ def delPost(deleteId, name):
     #判断当前用户是不是管理员
     if(tempPrivilegeData[0][0] == 0):
         #管理员直接进入删除流程
+        # FIXME
         sql = "SELECT commentID FROM Comments WHERE postID = %s;"
-        resultNumber = cursor.execute(sql, deleteId)
-        if resultNumber != 0:
+        resultNumberComment = cursor.execute(sql, deleteId)
+        if resultNumberComment != 0:
             deleteCommentsData = cursor.fetchall()
             #删除对应的评论
             sql = "DELETE FROM Comments WHERE commentID = %s ;"
-            for i in range(resultNumber):
+            for i in range(resultNumberComment):
                 tempResultNumber = cursor.execute(sql, deleteCommentsData[i][0])
         else:
-            cursor.close()
-            db.close()
-            return("尊敬的管理员，未能找到该帖子")
+            pass
+            # cursor.close()
+            # db.close()
+            # return("尊敬的管理员，未能找到该帖子")
     else:
         #非管理员开始判断是否为本人的帖子
         sql = "SELECT `userID` FROM Posts WHERE postID = %s;"
@@ -399,12 +432,12 @@ def delPost(deleteId, name):
             db.close()
             return ("该帖子不是您的帖子!")
         sql = "SELECT commentID FROM Comments WHERE postID = %s;"
-        resultNumber = cursor.execute(sql, deleteId)
+        resultNumberComment = cursor.execute(sql, deleteId)
         if resultNumber != 0:
             deleteCommentsData = cursor.fetchall()
             #删除对应的评论
             sql = "DELETE FROM Comments WHERE commentID = %s ;"
-            for i in range(resultNumber):
+            for i in range(resultNumberComment):
                 tempResultNumber = cursor.execute(sql, deleteCommentsData[i][0])
         else:
             cursor.close()
@@ -461,6 +494,12 @@ def delReply(deleteId, name):
 
 def searchPost(name, start, end):
     #通过用户名和开始时间与结束时间查找帖子
+    if start == None:
+        start = '1998-01-01'
+    if end == None:
+        end = '2042-01-01'
+    start = start + ' 00:00:00'
+    end = end + ' 00:00:00'
     db = pymysql.connect(host='101.35.29.201', user='root', password='0nishishabi.', database='mydb')
     cursor = db.cursor()
     sql = "SELECT `userID` FROM `Users` WHERE `name` = %s;"
@@ -528,6 +567,8 @@ def getUserInfo(name):
     recentReplies = []
     sql = "SELECT `userID` FROM `Users` WHERE `name` = %s;"
     resultNumber = cursor.execute(sql, name)
+    if(resultNumber == 0):
+        return None
     tempUserID = cursor.fetchall()
     userID = tempUserID[0][0]
     sql = "SELECT name, avatar_url FROM Users WHERE userID = %s;"

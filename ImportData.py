@@ -186,7 +186,6 @@ if __name__ == '__main__':
 
 
 
-def modifyData():
     db = pymysql.connect(host='121.5.70.212',
                          user='root',
                          password='0nishishabi.',

@@ -3,6 +3,85 @@ import os
 import json
 import hashlib
 
+
+
+name='xiashulin'
+db = pymysql.connect(host='101.35.29.201', user='root', password='0nishishabi.', database='mydb')
+cursor = db.cursor()
+recentTopics = []
+recentReplies = []
+sql = "SELECT `userID` FROM `Users` WHERE `name` = %s;"
+resultNumber = cursor.execute(sql, name)
+if(resultNumber == 0):
+    #return None
+    print("0")
+tempUserID = cursor.fetchall()
+userID = tempUserID[0][0]
+sql = "SELECT name, avatar_url FROM Users WHERE userID = %s;"
+resultNumber = cursor.execute(sql, userID)
+authorData = cursor.fetchall()
+authorDictionary={"loginname": authorData[0][0], "avatar_url": authorData[0][1]}
+sql = "SELECT postID FROM Posts WHERE `userID` = %s ORDER BY `lastReplyTime` DESC;"
+outerResultNumber = cursor.execute(sql, userID)
+outerAllData = cursor.fetchall()
+sql = "SELECT * FROM Posts WHERE postID = %s;"
+for i in range(outerResultNumber):
+    resultNumber = cursor.execute(sql, outerAllData[i][0])
+    allData = cursor.fetchall()
+    replyData = (str)(allData[0][6])
+    replyData = replyData.replace(' ', 'T')
+    replyData = replyData + 'Z'
+    returnedDataTopics = {
+        "id": allData[0][0],
+        "author": authorDictionary,
+        "title": allData[0][4],
+        "last_reply_at": replyData
+    }
+    recentTopics.append(returnedDataTopics)
+sql = "SELECT `commentID` FROM `Comments` WHERE `userID` = %s ORDER BY `Time` DESC;"
+outerAllData = cursor.fetchall()
+sql = "SELECT `postID` FROM Comments WHERE `commentID` = %s;"
+flagList = []
+for i in range(outerResultNumber):
+    resultNumber = cursor.execute(sql, outerAllData[i][0])
+    postData = cursor.fetchall()
+    if postData[0][0] in flagList:
+        continue
+    else:
+        flagList.append(postData[0][0])
+    sql1 = "SELECT * FROM Posts WHERE postID = %s;"
+    resultNumber = cursor.execute(sql1, postData[0][0])
+    allData = cursor.fetchall()
+    replyData = (str)(allData[0][6])
+    replyData = replyData.replace(' ', 'T')
+    replyData = replyData + 'Z'
+    sql1 = "SELECT name, avatar_url FROM Users WHERE userID = %s;"
+    resultNumber = cursor.execute(sql1, allData[0][1])
+    otherAuthorData = cursor.fetchall()
+    otherAuthorDictionary={"loginname": otherAuthorData[0][0], "avatar_url": otherAuthorData[0][1]}
+    returnedDataReplies = {
+        "id": allData[0][0],
+        "author": otherAuthorDictionary,
+        "title": allData[0][4],
+        "last_reply_at": replyData
+    }
+    recentReplies.append(returnedDataReplies)
+manythings = {
+    "loginname": name,
+    "avatar_url": authorData[0][1],
+    "githubUsername": name,
+    "recent_topics": recentTopics,
+    "recent_replies": recentReplies
+}
+waiForFormatting = {
+    "success": True,
+    "data": manythings,
+}
+cursor.close()
+db.close()
+print(json.dumps(waiForFormatting))
+
+
 # def getUserInfo(name):
 #     name='kingapple';
 #     db = pymysql.connect(host='101.35.29.201', user='root', password='0nishishabi.', database='mydb')

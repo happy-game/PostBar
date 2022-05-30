@@ -203,8 +203,15 @@ def search(request):
         )
     if(request.META['REQUEST_METHOD'] == 'POST'):
         name = request.POST.get('name')
-        start = request.POST.get('start')+' 00:00:00'
-        end = request.POST.get('end')+' 00:00:00'
+        # if(request.POST.get('start') = None):
+        start = request.POST.get('start')
+        
+        end = request.POST.get('end')
+        if(start=='null'):
+            start = None
+        if(end == 'null'):
+            end = None
+        print(start,end)
         data = myfunction.searchPost(name, start, end)       # 根据用户名，起止时间去查询
         return HttpResponse(
             json.dumps({
