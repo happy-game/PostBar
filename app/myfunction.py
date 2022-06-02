@@ -57,7 +57,7 @@ def decodejwt(token):
     return info
 
 def isBadSql(sql):
-    if('--' in sql or '#' in sql or 'OR' in sql or 'or' in sql):
+    if('--' in sql or '#' in sql):
         return True
     else:
         return False
@@ -69,7 +69,7 @@ def match(name,password):       # 根据账号密码查询是否匹配，返回�
     sql = "SELECT name,password,privilege FROM Users WHERE name = '%s' AND password = '%s' "%(name, password)
     cursor.execute(sql)
     results = cursor.fetchone()
-    if results !=None:
+    if results != None:
         return results[2]
     return -1
 
@@ -90,13 +90,17 @@ def addPost(markdownText, payload):    # 添加帖子,源格式为markdown转换
         results = cursor.fetchone()
 
     #  转换markdown 获取path和title
-    pwd = '/home/ubuntu/code-server/dd/app'     # 当前目录
-    path = '%s/contentData/'%pwd
-    print('%s%s.html'%(path,id))
+    # pwd = '/home/ubuntu/code-server/dd/app'     # 当前目录
+    # path = 'app/contentData/'%pwd
+    # print('%s%s.html'%(path,id))
     mytime = time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time()))   #  获取时间
     html = markdown.markdown(markdownText)
-    title = re.findall("h1>(.*?)<",html)[0]        # 正则匹配标题
-    with open('%s%s.html'%(path,id),'w',encoding='utf-8') as f:     # 帖子内容转化为html写入文件
+    title = re.findall("h1>(.*?)<",html)        # 正则匹配标题
+    if(title==None):
+        title = '无标题'
+    else:
+        title = title[0]
+    with open('app/contentData/%s.html'%(id),'w',encoding='utf-8') as f:     # 帖子内容转化为html写入文件
         f.write(html)
     sql = "SELECT name,userID FROM Users WHERE name = '%s' "%(payload['name'])
     if(isBadSql(sql)):
@@ -147,12 +151,12 @@ def addReply(markdownText,postID, payload):    # 添加帖子,源格式为markdo
         results = cursor.fetchone()
 
     #  转换markdown 获取path和title
-    pwd = '/home/ubuntu/code-server/dd/app'     # 当前目录
-    path = '%s/commentData/'%pwd
+    # pwd = '/home/ubuntu/code-server/dd/app'     # 当前目录
+    # path = '%s/commentData/'%pwd
     mytime = time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time()))   #  获取时间
     html = markdownText
     
-    with open('%s%s.html'%(path,id),'w',encoding='utf-8') as f:     # 帖子内容转化为html写入文件
+    with open('app/commentData/%s.html'%(id),'w',encoding='utf-8') as f:     # 帖子内容转化为html写入文件
         f.write(html)
     sql = "SELECT userID FROM Users WHERE name = '%s' "%(payload['name'])
     if(isBadSql(sql)):
@@ -203,10 +207,11 @@ def addUser(name,password):
 
     sql = "INSERT INTO Users(userID, \
                name, password, privilege) \
-               VALUES ('%s', '%s',  '%s',  '%s',  %d, '%s')" % \
+               VALUES ('%s', '%s',  '%s',  %d)" % \
               (id, name, password, 1)
-    if(isBadSql(sql)):
-        return None
+    print(sql)
+    # if(isBadSql(sql)):
+    #     return None
     
     try:
         # 执行sql语句
@@ -259,7 +264,7 @@ def queryPost(postID):
     allData = cursor.fetchall()
     #打开帖子内容的文件，将其读取
     current_path = os.path.dirname(__file__)
-    with open(current_path + '/../' + allData[0][3], 'r') as f:
+    with open(allData[0][3], 'r') as f:
         postData = f.read()
     #获取帖子用户信息
     sql = "SELECT name, avatar_url FROM Users WHERE userID = %s;"
@@ -282,7 +287,7 @@ def queryPost(postID):
         commentAuthorData = cursor.fetchall()
         tempTempDictionary = {"loginname": commentAuthorData[0][0], "avatar_url": commentAuthorData[0][1]}
 
-        with open(current_path + '/../' + commentData[i][3], 'r') as f:
+        with open(commentData[i][3], 'r') as f:
             commentPostData = f.read()
 
         commentCreateData = (str)(commentData[i][4])
@@ -350,7 +355,7 @@ def queryPostList(page):
         resultNumber = cursor.execute(sql, outerAllData[i][0])
         allData = cursor.fetchall()
         current_path = os.path.dirname(__file__)
-        with open(current_path + '/../' + allData[0][3], 'r') as f:
+        with open(allData[0][3], 'r') as f:
             postData = f.read()
         sql = "SELECT name, avatar_url FROM Users WHERE userID = %s;"
         resultNumber = cursor.execute(sql, allData[0][1])
@@ -519,7 +524,7 @@ def searchPost(name, start, end):
         resultNumber = cursor.execute(sql, outerAllData[i][0])
         allData = cursor.fetchall()
         current_path = os.path.dirname(__file__)
-        with open(current_path + '/../' + allData[0][3], 'r') as f:
+        with open(allData[0][3], 'r') as f:
             postData = f.read()
         sql = "SELECT name, avatar_url FROM Users WHERE userID = %s;"
         resultNumber = cursor.execute(sql, allData[0][1])
